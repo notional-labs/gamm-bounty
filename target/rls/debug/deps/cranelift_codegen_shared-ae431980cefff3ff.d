@@ -1,0 +1,13 @@
+/home/pegasus/ibc-gamm-contract/target/rls/debug/deps/cranelift_codegen_shared-ae431980cefff3ff.rmeta: /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/lib.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/condcodes.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constant_hash.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constants.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/mod.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/mod.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/encoding_bits.rs
+
+/home/pegasus/ibc-gamm-contract/target/rls/debug/deps/cranelift_codegen_shared-ae431980cefff3ff.d: /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/lib.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/condcodes.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constant_hash.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constants.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/mod.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/mod.rs /home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/encoding_bits.rs
+
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/lib.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/condcodes.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constant_hash.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/constants.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/mod.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/mod.rs:
+/home/pegasus/.cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-shared-0.76.0/src/isa/x86/encoding_bits.rs:
+
+# env-dep:CARGO_PKG_VERSION=0.76.0

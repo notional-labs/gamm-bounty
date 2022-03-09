@@ -1,0 +1,1 @@
+/home/pegasus/ibc-gamm-contract/ibc-gamm-osmosis/target/debug/libibc_gamm_osmosis.so: /home/pegasus/ibc-gamm-contract/ibc-gamm-osmosis/src/contract.rs /home/pegasus/ibc-gamm-contract/ibc-gamm-osmosis/src/lib.rs /home/pegasus/ibc-gamm-contract/ibc-gamm-osmosis/src/msg.rs /home/pegasus/ibc-gamm-contract/ibc-gamm-osmosis/src/state.rs

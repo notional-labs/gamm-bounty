@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/home/pegasus/ibc-gamm-contract/ibc-reflect/target/debug/build/typenum-0a20933f0f10a8bf/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/home/pegasus/ibc-gamm-contract/ibc-reflect/target/debug/build/typenum-0a20933f0f10a8bf/out/op.rs
