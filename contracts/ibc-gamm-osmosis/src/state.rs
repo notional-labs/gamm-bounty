@@ -19,7 +19,7 @@ pub fn swap_queue(storage: &mut dyn Storage) -> Bucket<String> {
     bucket(storage, PREFIX_SWAP_QUEUE)
 }
 
-pub fn aswap_queue_read(storage: &dyn Storage) -> ReadonlyBucket<String> {
+pub fn swap_queue_read(storage: &dyn Storage) -> ReadonlyBucket<String> {
     bucket_read(storage, PREFIX_SWAP_QUEUE)
 }
 

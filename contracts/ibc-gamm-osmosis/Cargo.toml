@@ -1,5 +1,5 @@
 [package]
-name = "ibc-gamm-osmosis"
+name = "ibc_gamm_osmosis"
 version = "0.0.0"
 edition = "2018"
 publish = false

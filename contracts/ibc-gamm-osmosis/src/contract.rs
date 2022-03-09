@@ -1,22 +1,24 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
+    entry_point, from_slice, to_binary, Binary, CosmosMsg, DepsMut,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgExecutionResponse, SubMsgResult, WasmMsg,
+    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, MessageInfo,  Reply, Response, StdError, StdResult,
+    SubMsg, SubMsgExecutionResponse, SubMsgResult,
 };
 
 use cosmwasm_std::{ Storage};
 
 use crate::msg::{
     AcknowledgementMsg, 
-    InstantiateMsg, PacketMsg, ExecuteMsg, SetIBCDenomForContractMsg, IbcSwap, IbcSwapResponse,
+    InstantiateMsg, PacketMsg, ExecuteMsg, 
+    // SetIBCDenomForContractMsg, 
+    IbcSwap, IbcSwapResponse,
 };
 use crate::tx::{
-    MsgSwapExactAmountIn, Msg,
+    MsgSwapExactAmountIn, Msg, MsgSend,
 };
 use crate::execute::execute_set_ibc_denom_for_contract;
-use crate::state::{IBC_DENOM_TO_PORT_ID,swap_queue, swap_queue_counter_read, swap_queue_counter};
+use crate::state::{IBC_DENOM_TO_PORT_ID,swap_queue, swap_queue_counter_read, swap_queue_counter, swap_queue_read};
 use crate::{SwapAmountInRoute, Coin};
 
 pub const IBC_VERSION: &str = "ibc-gamm-v1";
@@ -25,10 +27,10 @@ pub const INIT_CALLBACK_ID: u64 = 7890;
 
 #[entry_point]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     Ok(Response::new().add_attribute("action", "instantiate"))
@@ -37,8 +39,8 @@ pub fn instantiate(
 #[entry_point]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
+    _env: Env,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
@@ -57,7 +59,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
         }
         SubMsgResult::Ok(response) => {
             if reply.id < 20 {
-                handle_swap_callback(deps, env.contract.address.into(), response)
+                handle_swap_callback(deps, env.contract.address.into(), reply.id as u8,response)
             }
             // else if 20 <= reply.id && reply.id< 40 {
 
@@ -65,27 +67,38 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
             else {
                 Err(StdError::generic_err("invalid reply id"))
             }
-
-
         }
         _ => Err(StdError::generic_err("invalid reply id or result")),
 
     }
 }
 
-
 pub fn handle_swap_callback(
     deps: DepsMut,
     this_contract_address: String,
+    reply_id: u8,
     response: SubMsgExecutionResponse,
 ) -> StdResult<Response> {
+    let to_address = swap_queue_read(deps.storage).load(&[reply_id])?;
 
+    let coin_out = parse_out_coin_from_event(response.events);
 
+    let send_msg_any = MsgSend{
+        from_address: this_contract_address,
+        to_address: to_address,
+        amount: vec![coin_out],
+    }.to_any().unwrap();
 
-    Ok(Response::new().add_attribute("action", "execute_init_callback"))
+    let send_msg_stargate = CosmosMsg::Stargate{
+        type_url: send_msg_any.type_url,
+        value: send_msg_any.value.into(),
+    };
+
+    let send_msg = SubMsg::new(send_msg_stargate);
+    Ok(Response::new()
+        .add_submessage(send_msg)
+        .add_attribute("action", "execute_init_callback"))
 }
-
-
 
 fn parse_out_coin_from_event(events: Vec<Event>) -> Coin {
     let out_coin = events
@@ -141,7 +154,7 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
 #[entry_point]
 /// once it's established, we create the reflect contract
 pub fn ibc_channel_connect(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
@@ -158,8 +171,8 @@ pub fn ibc_channel_connect(
 /// On closed channel, we take all tokens from reflect contract to this contract.
 /// We also delete the channel entry from accounts.
 pub fn ibc_channel_close(
-    deps: DepsMut,
-    env: Env,
+    _deps: DepsMut,
+    _env: Env,
     msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
@@ -213,19 +226,30 @@ pub fn ibc_packet_receive(
     })
 }
 
-fn increment_swap_queue_counter(storage: &mut dyn Storage) {
+// fn increment_swap_queue_counter(storage: &mut dyn Storage) {
+//     let current_counter = swap_queue_counter_read(storage).load().unwrap();
+//     if current_counter != 19 {
+//         swap_queue_counter(storage).save(&(current_counter + 1)).unwrap();
+//     }
+//     else {
+//         swap_queue_counter(storage).save(&(0)).unwrap();
+//     }
+// }
+
+fn get_and_increment_swap_queue_counter(storage: &mut dyn Storage) -> u8 {
     let current_counter = swap_queue_counter_read(storage).load().unwrap();
     if current_counter != 19 {
-        swap_queue_counter(storage).save(&(current_counter + 1));
+        swap_queue_counter(storage).save(&(current_counter + 1)).unwrap();
     }
     else {
-        swap_queue_counter(storage).save(&(0));
+        swap_queue_counter(storage).save(&(0)).unwrap();
     }
+    current_counter
 }
 
-fn get_swap_queue_counter(storage: &dyn Storage) -> u8 {
-    swap_queue_counter_read(storage).load().unwrap()
-}
+// fn get_swap_queue_counter(storage: &dyn Storage) -> u8 {
+//     swap_queue_counter_read(storage).load().unwrap()
+// }
 
 
 // processes PacketMsg::Dispatch variant
@@ -255,28 +279,29 @@ fn receive_swap(
         amount: msg.in_amount.to_string(),
     };
 
-    let swap_msg = MsgSwapExactAmountIn{
+    let swap_msg_any = MsgSwapExactAmountIn{
         sender: this_contract_address,
         routes: vec![route],
         token_in: token_in,
         token_out_min_amount: msg.min_out_amount,
     }.to_any().unwrap();
 
-    let swap_msg = CosmosMsg::Stargate{
-        type_url: swap_msg.type_url,
-        value: swap_msg.value.into(),
+    let swap_msg_stargate = CosmosMsg::Stargate{
+        type_url: swap_msg_any.type_url,
+        value: swap_msg_any.value.into(),
     };
     
-    let msg = SubMsg::reply_always(swap_msg, get_swap_queue_counter(deps.storage).into());
+    // get current position of swap request in the swap queue
+    let current_counter = get_and_increment_swap_queue_counter(deps.storage);
+    let swap_submsg = SubMsg::reply_always(swap_msg_stargate, current_counter.into());
     let acknowledgement = to_binary(&AcknowledgementMsg::<IbcSwapResponse>::Ok(()))?;
 
-    swap_queue()
-
-
+    // add to_address to swap queue
+    swap_queue(deps.storage).save(&[current_counter], &msg.to_address)?;
 
     Ok(IbcReceiveResponse::new()
         .set_ack(acknowledgement)
-        .add_submessage(msg)
+        .add_submessage(swap_submsg)
         .add_attribute("action", "receive_swap"))
 }
 
@@ -298,4 +323,4 @@ pub fn ibc_packet_timeout(
     _msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse::new().add_attribute("action", "ibc_packet_timeout"))
-}use cosmwasm_std::{ Storage};
+}
