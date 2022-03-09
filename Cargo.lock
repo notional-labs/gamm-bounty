@@ -972,7 +972,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ibc-swap-juno"
+name = "ibc_swap_juno"
 version = "0.0.0"
 dependencies = [
  "cosmwasm-schema",

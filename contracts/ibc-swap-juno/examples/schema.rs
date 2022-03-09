@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use ibc_reflect_send::ibc_msg::PacketMsg;
-use ibc_reflect_send::msg::{
+use ibc_swap_juno::ibc_msg::PacketMsg;
+use ibc_swap_juno::msg::{
     AccountResponse, AdminResponse, ExecuteMsg, InstantiateMsg, ListAccountsResponse, QueryMsg,
 };
 
