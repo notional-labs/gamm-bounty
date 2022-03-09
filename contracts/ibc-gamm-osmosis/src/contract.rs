@@ -21,7 +21,7 @@ use crate::execute::execute_set_ibc_denom_for_contract;
 use crate::state::{IBC_DENOM_TO_PORT_ID,swap_queue, swap_queue_counter_read, swap_queue_counter, swap_queue_read};
 use crate::{SwapAmountInRoute, Coin};
 
-pub const IBC_VERSION: &str = "ibc-gamm-v1";
+pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
 pub const INIT_CALLBACK_ID: u64 = 7890;
 
@@ -68,8 +68,6 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
                 Err(StdError::generic_err("invalid reply id"))
             }
         }
-        _ => Err(StdError::generic_err("invalid reply id or result")),
-
     }
 }
 
