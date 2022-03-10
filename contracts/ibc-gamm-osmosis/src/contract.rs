@@ -12,7 +12,7 @@ use crate::msg::{
     AcknowledgementMsg, 
     InstantiateMsg, PacketMsg, ExecuteMsg, 
     // SetIbcDenomForContractMsg, 
-    IbcSwap, IbcSwapResponse,
+    IbcSwapPacket, IbcSwapResponse,
 };
 use crate::tx::{
     MsgSwapExactAmountIn, Msg, MsgSend,
@@ -255,7 +255,7 @@ fn receive_swap(
     deps: DepsMut,
     this_contract_address: String,
     counterparty_contract_port_id: String,
-    msg: IbcSwap,
+    msg: IbcSwapPacket,
 ) -> StdResult<IbcReceiveResponse> {
 
     let port_id_of_in_denom = IBC_DENOM_TO_PORT_ID.load(deps.storage, &msg.in_denom)?;
