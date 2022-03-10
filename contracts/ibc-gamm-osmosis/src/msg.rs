@@ -15,11 +15,11 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    SetIBCDenomForContract(SetIBCDenomForContractMsg),
+    SetIbcDenomForContract(SetIbcDenomForContractMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct SetIBCDenomForContractMsg {
+pub struct SetIbcDenomForContractMsg {
     pub ibc_denom: String,
     
     pub contract_port_id: String,

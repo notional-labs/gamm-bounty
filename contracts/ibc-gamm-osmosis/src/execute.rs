@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 
 use crate::msg::{
-  SetIBCDenomForContractMsg,
+  SetIbcDenomForContractMsg,
 };
 use crate::state::{IBC_DENOM_TO_PORT_ID};
 
@@ -12,7 +12,7 @@ use hex::ToHex;
 
 pub fn execute_set_ibc_denom_for_contract(
     deps: DepsMut,
-    msg: SetIBCDenomForContractMsg,
+    msg: SetIbcDenomForContractMsg,
 ) -> StdResult<Response> {
     let calculated_ibc_denom = cal_contract_ibc_denom(msg.contract_port_id.to_owned(), &msg.contract_channel_id, &msg.contract_native_denom);
     if calculated_ibc_denom != msg.ibc_denom {

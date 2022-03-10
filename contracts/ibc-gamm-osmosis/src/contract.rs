@@ -11,7 +11,7 @@ use cosmwasm_std::{ Storage};
 use crate::msg::{
     AcknowledgementMsg, 
     InstantiateMsg, PacketMsg, ExecuteMsg, 
-    // SetIBCDenomForContractMsg, 
+    // SetIbcDenomForContractMsg, 
     IbcSwap, IbcSwapResponse,
 };
 use crate::tx::{
@@ -44,7 +44,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::SetIBCDenomForContract(msg) => {
+        ExecuteMsg::SetIbcDenomForContract(msg) => {
             execute_set_ibc_denom_for_contract(deps, msg)
         },
     }
