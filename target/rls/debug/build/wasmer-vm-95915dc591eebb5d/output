@@ -13,15 +13,15 @@ CFLAGS = None
 CRATE_CC_NO_DEFAULTS = None
 DEBUG = Some("true")
 CARGO_CFG_TARGET_FEATURE = Some("fxsr,sse,sse2")
-running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-Wall" "-Wextra" "-DCFG_TARGET_OS_LINUX" "-o" "/home/pegasus/ibc-gamm-contract/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/src/trap/handlers.o" "-c" "src/trap/handlers.c"
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-Wall" "-Wextra" "-DCFG_TARGET_OS_LINUX" "-o" "/home/pegasus/gamm-bounty/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/src/trap/handlers.o" "-c" "src/trap/handlers.c"
 exit status: 0
 AR_x86_64-unknown-linux-gnu = None
 AR_x86_64_unknown_linux_gnu = None
 HOST_AR = None
 AR = None
-running: "ar" "cq" "/home/pegasus/ibc-gamm-contract/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/libhandlers.a" "/home/pegasus/ibc-gamm-contract/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/src/trap/handlers.o"
+running: "ar" "cq" "/home/pegasus/gamm-bounty/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/libhandlers.a" "/home/pegasus/gamm-bounty/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/src/trap/handlers.o"
 exit status: 0
-running: "ar" "s" "/home/pegasus/ibc-gamm-contract/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/libhandlers.a"
+running: "ar" "s" "/home/pegasus/gamm-bounty/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out/libhandlers.a"
 exit status: 0
 cargo:rustc-link-lib=static=handlers
-cargo:rustc-link-search=native=/home/pegasus/ibc-gamm-contract/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out
+cargo:rustc-link-search=native=/home/pegasus/gamm-bounty/target/rls/debug/build/wasmer-vm-95915dc591eebb5d/out

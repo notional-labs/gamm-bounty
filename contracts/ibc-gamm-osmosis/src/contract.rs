@@ -44,7 +44,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::SetIBCDenomForContractMsg(msg) => {
+        ExecuteMsg::SetIBCDenomForContract(msg) => {
             execute_set_ibc_denom_for_contract(deps, msg)
         },
     }
