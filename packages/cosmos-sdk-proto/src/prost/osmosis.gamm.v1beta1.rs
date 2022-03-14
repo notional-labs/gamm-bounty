@@ -40,4 +40,27 @@ pub struct MsgJoinSwapExternAmountIn {
     pub token_in: ::core::option::Option<super::super::super::cosmos::base::v1beta1::Coin>,  
     #[prost(string, tag = "4")]
     pub share_out_min_amount: ::prost::alloc::string::String,
- }
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QuerySpotPriceRequest {
+    /// address is the address to query balances for.
+    #[prost(uint64, tag = "1")]
+    pub pool_id: u64,
+
+    #[prost(string, tag = "2")]
+    pub token_in_denom: ::prost::alloc::string::String,
+
+    #[prost(string, tag = "3")]
+    pub token_out_denom: ::prost::alloc::string::String,
+
+    #[prost(bool, tag = "4")]
+    pub with_swap_fee: bool,
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QuerySpotPriceResponse {
+    #[prost(string, tag = "1")]
+    pub spot_price: ::prost::alloc::string::String,
+}
+

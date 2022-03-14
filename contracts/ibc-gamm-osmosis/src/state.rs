@@ -6,7 +6,8 @@ use cosmwasm_storage::{
 use cosmwasm_std::{ Storage};
 
 
-pub const IBC_DENOM_TO_PORT_ID: Map<&str, String> = Map::new("IBC_DENOM_TO_PORT_ID");
+pub const IBC_DENOM_TO_PORT_AND_CONN_ID: Map<&str, (String, String)> = Map::new("ibc_denom_to_port_and_conn_id");
+pub const CHANNEL_ID_TO_CONN_ID: Map<&str, String> = Map::new("channel_id_to_conn_id");
 
 pub const SWAP_QUEUE: &[&str;20] = &["";20];
 pub const PREFIX_SWAP_QUEUE: &[u8] = b"swap_queue";

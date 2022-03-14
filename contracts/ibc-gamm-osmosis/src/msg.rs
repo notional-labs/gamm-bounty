@@ -22,8 +22,6 @@ pub enum ExecuteMsg {
 pub struct SetIbcDenomForContractMsg {
     pub ibc_denom: String,
     
-    pub contract_port_id: String,
-
     pub contract_channel_id: String,
     // denom of that contract token on the native chain
     pub contract_native_denom: String,
@@ -53,4 +51,6 @@ pub struct IbcSwapPacket {
 /// The success value depends on the PacketMsg variant.
 pub type AcknowledgementMsg<T> = ContractResult<T>;
 
+/// This is the success response we send on ack for PacketMsg::Dispatch.
+/// Just acknowledge success or error
 pub type IbcSwapResponse = ();

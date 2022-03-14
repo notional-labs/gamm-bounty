@@ -1,24 +1,27 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, Binary, CosmosMsg, DepsMut,
+    entry_point, to_binary, Binary, CosmosMsg, DepsMut, from_binary,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, MessageInfo,  Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgExecutionResponse, SubMsgResult,
+    SubMsg, SubMsgExecutionResponse, SubMsgResult, IbcMsg, QueryRequest,
 };
 
 use cosmwasm_std::{ Storage};
 
+
 use crate::msg::{
     AcknowledgementMsg, 
-    InstantiateMsg, PacketMsg, ExecuteMsg, 
+    InstantiateMsg, ExecuteMsg, 
     // SetIbcDenomForContractMsg, 
-    IbcSwapPacket, IbcSwapResponse,
+    IbcSwapPacket, 
+    IbcSwapResponse,
+    SetIbcDenomForContractMsg,
 };
 use crate::tx::{
     MsgSwapExactAmountIn, Msg, MsgSend,
 };
 use crate::execute::execute_set_ibc_denom_for_contract;
-use crate::state::{IBC_DENOM_TO_PORT_ID,swap_queue, swap_queue_counter_read, swap_queue_counter, swap_queue_read};
+use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID,swap_queue, swap_queue_counter_read, swap_queue_counter, swap_queue_read, CHANNEL_ID_TO_CONN_ID};
 use crate::{SwapAmountInRoute, Coin};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
@@ -27,12 +30,13 @@ pub const INIT_CALLBACK_ID: u64 = 7890;
 
 #[entry_point]
 pub fn instantiate(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
+    swap_queue_counter(deps.storage).save(&(0)).unwrap();
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
@@ -152,13 +156,16 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
 #[entry_point]
 /// once it's established, we create the reflect contract
 pub fn ibc_channel_connect(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
     let chan_id = &channel.endpoint.channel_id;
+    let conn_id = &msg.channel().connection_id;
 
+    CHANNEL_ID_TO_CONN_ID.save(deps.storage, chan_id, conn_id)?;
+    
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", chan_id)
@@ -209,14 +216,18 @@ pub fn ibc_packet_receive(
         let packet = msg.packet;
         // which local channel did this packet come on
         let counterparty_contract_port_id = packet.src.port_id;
-        let msg: PacketMsg = from_slice(&packet.data)?;
-        match msg {
-            PacketMsg::IbcSwap(msg) => receive_swap(deps, env.contract.address.into(), counterparty_contract_port_id, msg),
-        }
+        let chann_id = packet.dest.channel_id;
+        let packet_msg: IbcSwapPacket = from_binary(&packet.data)?;
+        println!("1");
+        let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
+        println!("1");
+
+        receive_swap(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, packet_msg)
     })()
     .or_else(|e| {
         // we try to capture all app-level errors and convert them into
         // acknowledgement packets that contain an error code.
+
         let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
         Ok(IbcReceiveResponse::new()
             .set_ack(acknowledgement)
@@ -254,19 +265,19 @@ fn get_and_increment_swap_queue_counter(storage: &mut dyn Storage) -> u8 {
 fn receive_swap(
     deps: DepsMut,
     this_contract_address: String,
-    counterparty_contract_port_id: String,
+    counterparty_port_id: String,
+    conn_id: String,
     msg: IbcSwapPacket,
 ) -> StdResult<IbcReceiveResponse> {
+    let (expected_port_id, expected_conn_id) = IBC_DENOM_TO_PORT_AND_CONN_ID.load(deps.storage, &msg.in_denom.to_owned())?;
 
-    let port_id_of_in_denom = IBC_DENOM_TO_PORT_ID.load(deps.storage, &msg.in_denom)?;
-
-    if counterparty_contract_port_id != port_id_of_in_denom {
+    if !((counterparty_port_id == expected_port_id ) && ( conn_id == expected_conn_id )){
         let acknowledgement = encode_ibc_error("contract don't have permission to move fund");
         return Ok(IbcReceiveResponse::new()
             .set_ack(acknowledgement)
             .add_attribute("packet", "receive"));
     }
-
+    println!("2");
 
     let route = SwapAmountInRoute{
         pool_id : msg.pool_id,
@@ -322,3 +333,110 @@ pub fn ibc_packet_timeout(
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse::new().add_attribute("action", "ibc_packet_timeout"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_env, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
+        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
+        mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+    };
+    use cosmwasm_std::{attr, coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg, IbcOrder};
+
+    const CREATOR: &str = "creator";
+
+        // connect will run through the entire handshake to set up a proper connect and
+    // save the account (tested in detail in `proper_handshake_flow`)
+    fn connect(mut deps: DepsMut, channel_id: &str) {
+        let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        // first we try to open with a valid handshake
+        ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
+
+        // then we connect (with counter-party version set)
+        let handshake_connect =
+            mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+    }
+
+    fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+        };
+        let info = mock_info(CREATOR, &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        deps
+    }
+
+
+    #[test]
+
+    fn marshal_work() {
+        let packet = IbcSwapPacket{
+            pool_id: 9,
+            in_amount: "".to_string(),
+            in_denom :  "".to_string(),
+            out_denom : "".to_owned(),
+            to_address: "".to_string(),
+            min_out_amount: "".to_owned(),
+        };
+
+        let  data = to_binary(&packet).unwrap();
+
+        let _: IbcSwapPacket = from_binary(&data).unwrap();
+
+        let acknowledgement = to_binary(&AcknowledgementMsg::<IbcSwapResponse>::Ok(())).unwrap();
+
+        let ack: AcknowledgementMsg<IbcSwapResponse> =
+            from_slice(&acknowledgement).unwrap();
+        ack.unwrap();
+    }
+
+    #[test]
+    fn handle_dispatch_packet() {
+        let mut deps = setup();
+
+        let channel_id = "channel-123";
+
+        let ibc_denom = "ibc/1A757F169E3BB799B531736E060340FF68F37CBCEA881A147D83F84F7D87E828";
+
+        let msg = SetIbcDenomForContractMsg{
+            ibc_denom: ibc_denom.to_owned(),
+            contract_channel_id: "channel-1".to_string(),
+            contract_native_denom: "denom".to_string(),
+        };
+
+
+        let ibc_msg = IbcSwapPacket {
+            pool_id: 1,
+            in_amount: "10".to_owned(),
+            in_denom: "test".to_owned(),
+            min_out_amount: "1".to_owned(), 
+            out_denom: "test".to_owned(), 
+            to_address: "addr".to_owned(),
+        };
+
+        // register the channel
+        connect(deps.as_mut(), channel_id);
+
+        CHANNEL_ID_TO_CONN_ID.save(deps.as_mut().storage, channel_id, &"connection-2".to_string()).unwrap();
+        IBC_DENOM_TO_PORT_AND_CONN_ID.save(deps.as_mut().storage, "test", &("their-port".to_owned(), "connection-2".to_owned())).unwrap();
+
+
+        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+        let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+        let res: IbcReceiveResponse = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
+
+        // let acknowledgement = to_binary(&AcknowledgementMsg::<IbcSwapResponse>::Ok(()))?;
+        // assert app-level success
+        let ack: AcknowledgementMsg<IbcSwapResponse> =
+            from_slice(&res.acknowledgement).unwrap();
+        ack.unwrap();
+
+    }
+
+
+}
+
+
