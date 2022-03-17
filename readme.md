@@ -15,9 +15,9 @@ This contract ensures that a `remote ibc contract` can controll a certain `ibc c
 
 How can we validate if an `ibc coin` belongs to a `remote ibc contract`'s `transfer channel`:
 
-1. [`SetIbcDenomForContractMsg`]() once executed will tie an ibc denom to its respective `transfer channel` 's source chain `port id` and dest chain `connection id` (source chain is the coin native chain, dest chain is osmosis)
+1. [`SetIbcDenomForContractMsg`](https://github.com/notional-labs/gamm-bounty/blob/6112a82089d4d0d588c49bbbfe72ed09b0ad94bf/readme.md?plain=1#L52) once executed will tie an ibc denom to its respective `transfer channel` 's source chain `port id` and dest chain `connection id` (source chain is the coin native chain, dest chain is osmosis)
 
-2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`]() on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](), this contract check if the `port id` of that `remote ibc contract` and the `connection id` on osmosis of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom. If true, this contract will execute swap.
+2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`](https://github.com/notional-labs/gamm-bounty/blob/6112a82089d4d0d588c49bbbfe72ed09b0ad94bf/readme.md?plain=1#L37) on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](https://github.com/notional-labs/gamm-bounty/blob/6112a82089d4d0d588c49bbbfe72ed09b0ad94bf/readme.md?plain=1#L37), this contract check if the `port id` of that `remote ibc contract` and the `connection id` on osmosis of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom. If true, this contract will execute swap.
 
 ## Type of IBC Packet
 SpotPriceQueryPacket
