@@ -36,6 +36,10 @@ pub enum PacketMsg {
     SpotPriceQuery{
         spot_price_query_packet: SpotPriceQueryPacket
     },
+
+    IbcAddLiquidity{
+        ibc_add_liquidity: IbcAddLiquidPacket
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -73,3 +77,14 @@ pub struct SpotPriceQueryResponse {
     pub spot_price: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct IbcAddLiquidPacket {
+    pub pool_id: u64,
+
+    pub share_out_amount: String,
+    pub token1_amount: String,
+    pub token1_denom: String,
+
+    pub token2_amount: String,
+    pub token2_denom: String,
+}

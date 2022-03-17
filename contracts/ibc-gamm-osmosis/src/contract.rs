@@ -21,7 +21,8 @@ use crate::msg::{
     // SpotPriceQueryPacket,
     PacketMsg,
     IbcSwapPacket,
-    SpotPriceQueryPacket, SpotPriceQueryResponse
+    SpotPriceQueryPacket, SpotPriceQueryResponse,
+    IbcAddLiquidPacket,
 };
 use cosmos_types::tx::{
     MsgSwapExactAmountIn,
@@ -30,7 +31,7 @@ use cosmos_types::msg::Msg;
 use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::execute::execute_set_ibc_denom_for_contract;
 use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID, CHANNEL_ID_TO_CONN_ID};
-use cosmos_types::{SwapAmountInRoute, Coin};
+use cosmos_types::{SwapAmountInRoute, Coin, MsgJoinPool};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
@@ -167,6 +168,12 @@ pub fn ibc_packet_receive(
             } => {
                 receive_spot_price_query(deps, spot_price_query_packet)
             }
+            PacketMsg::IbcAddLiquidity{
+                ibc_add_liquidity
+            } => {
+                let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
+                receive_add_liquidity(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, ibc_add_liquidity)
+            }
         }
     })()
     .or_else(|e| {
@@ -189,6 +196,55 @@ pub fn ibc_packet_receive(
 //         swap_queue_counter(storage).save(&(0)).unwrap();
 //     }
 // }
+
+fn receive_add_liquidity(
+    deps: DepsMut,
+    this_contract_address: String,
+    counterparty_port_id: String,
+    conn_id: String,
+    ibc_add_liquidity: IbcAddLiquidPacket,
+) -> StdResult<IbcReceiveResponse>{
+    let (expected_port_id, expected_conn_id) = IBC_DENOM_TO_PORT_AND_CONN_ID.load(deps.storage, &ibc_add_liquidity.token1_denom.to_owned())?;
+    
+    if !((counterparty_port_id == expected_port_id ) && ( conn_id == expected_conn_id )){
+        let acknowledgement = encode_ibc_error("contract don't have permission to move fund");
+        return Ok(IbcReceiveResponse::new()
+            .set_ack(acknowledgement)
+            .add_attribute("packet", "receive"));
+    }
+
+    let token_max1 = Coin{
+        amount: ibc_add_liquidity.token1_amount,
+        denom: ibc_add_liquidity.token1_denom
+    }; 
+
+    let token_max2 = Coin{
+        amount: ibc_add_liquidity.token2_amount,
+        denom: ibc_add_liquidity.token2_denom
+    }; 
+    let token_maxs = vec![token_max1, token_max2];
+
+    let joinpool_msg_any = MsgJoinPool{
+        sender: this_contract_address,
+        pool_id: ibc_add_liquidity.pool_id,
+        share_out_amount: ibc_add_liquidity.share_out_amount,
+        token_in_maxs: token_maxs,
+    }.to_any().unwrap();
+
+    let swap_msg_stargate = CosmosMsg::Stargate{
+        type_url: joinpool_msg_any.type_url,
+        value: joinpool_msg_any.value.into(),
+    };
+
+    let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Ok(()))?;
+
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_message(swap_msg_stargate)
+        .add_attribute("action", "receive_add_liquidity"))
+
+}
+
 
 fn receive_spot_price_query(    
     deps: DepsMut,

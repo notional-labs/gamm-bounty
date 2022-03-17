@@ -176,4 +176,3 @@ impl From<&MsgJoinSwapExternAmountIn> for proto::osmosis::gamm::v1beta1::MsgJoin
         }
     }
 }
-
