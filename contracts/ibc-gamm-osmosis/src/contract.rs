@@ -21,7 +21,8 @@ use crate::msg::{
     // SpotPriceQueryPacket,
     PacketMsg,
     IbcSwapPacket,
-    SpotPriceQueryPacket, SpotPriceQueryResponse
+    SpotPriceQueryPacket, SpotPriceQueryResponse,
+    IbcJoinPoolPacket,
 };
 use cosmos_types::tx::{
     MsgSwapExactAmountIn,
@@ -30,7 +31,7 @@ use cosmos_types::msg::Msg;
 use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::execute::execute_set_ibc_denom_for_contract;
 use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID, CHANNEL_ID_TO_CONN_ID};
-use cosmos_types::{SwapAmountInRoute, Coin};
+use cosmos_types::{SwapAmountInRoute, Coin, MsgJoinPool};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
@@ -167,6 +168,12 @@ pub fn ibc_packet_receive(
             } => {
                 receive_spot_price_query(deps, spot_price_query_packet)
             }
+            PacketMsg::IbcJoinPool{
+                ibc_join_pool
+            } => {
+                let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
+                receive_join_pool(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, ibc_join_pool)
+            }
         }
     })()
     .or_else(|e| {
@@ -190,11 +197,58 @@ pub fn ibc_packet_receive(
 //     }
 // }
 
+fn receive_join_pool(
+    deps: DepsMut,
+    this_contract_address: String,
+    counterparty_port_id: String,
+    conn_id: String,
+    ibc_join_pool: IbcJoinPoolPacket,
+) -> StdResult<IbcReceiveResponse>{
+    let (expected_port_id, expected_conn_id) = IBC_DENOM_TO_PORT_AND_CONN_ID.load(deps.storage, &ibc_join_pool.token1_denom.to_owned())?;
+    
+    if !((counterparty_port_id == expected_port_id ) && ( conn_id == expected_conn_id )){
+        let acknowledgement = encode_ibc_error("contract don't have permission to move fund");
+        return Ok(IbcReceiveResponse::new()
+            .set_ack(acknowledgement)
+            .add_attribute("packet", "receive"));
+    }
+
+    let token_max1 = Coin{
+        amount: ibc_join_pool.token1_amount,
+        denom: ibc_join_pool.token1_denom
+    }; 
+
+    let token_max2 = Coin{
+        amount: ibc_join_pool.token2_amount,
+        denom: ibc_join_pool.token2_denom
+    }; 
+    let token_maxs = vec![token_max1, token_max2];
+
+    let join_pool_msg_any = MsgJoinPool{
+        sender: this_contract_address,
+        pool_id: ibc_join_pool.pool_id,
+        share_out_amount: ibc_join_pool.share_out_amount,
+        token_in_maxs: token_maxs,
+    }.to_any().unwrap();
+
+    let join_pool_msg_stargate = CosmosMsg::Stargate{
+        type_url: join_pool_msg_any.type_url,
+        value: join_pool_msg_any.value.into(),
+    };
+
+    let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Ok(()))?;
+
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_message(join_pool_msg_stargate)
+        .add_attribute("action", "receive_join_pool"))
+}
+
+
 fn receive_spot_price_query(    
     deps: DepsMut,
     spot_price_query_packet: SpotPriceQueryPacket
 ) -> StdResult<IbcReceiveResponse> {
-
     let req = QuerySpotPriceRequest {
         pool_id: spot_price_query_packet.pool_id,
         token_in_denom: spot_price_query_packet.in_denom,
@@ -491,8 +545,41 @@ mod tests {
         ack.unwrap();
 
     }
-
-
+    #[test]
+    fn handle_dispatch_packet_join_pool() {
+        let mut deps = setup();
+    
+        let channel_id = "channel-123";
+    
+        let ibc_join_pool_package = IbcJoinPoolPacket {
+            pool_id: 1,
+            token1_amount: "10".to_owned(),
+            token1_denom: "test".to_owned(),
+            token2_amount: "1".to_owned(), 
+            token2_denom: "test".to_owned(), 
+            share_out_amount: "1000000".to_owned(),
+        };
+    
+        let packet = PacketMsg::IbcJoinPool {
+            ibc_join_pool: ibc_join_pool_package,
+        };
+    
+    
+        // register the channel
+        connect(deps.as_mut(), channel_id);
+    
+        CHANNEL_ID_TO_CONN_ID.save(deps.as_mut().storage, channel_id, &"connection-2".to_string()).unwrap();
+        IBC_DENOM_TO_PORT_AND_CONN_ID.save(deps.as_mut().storage, "test", &("their-port".to_owned(), "connection-2".to_owned())).unwrap();
+    
+    
+        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+        let msg = mock_ibc_packet_recv(channel_id, &packet).unwrap();
+        let res: IbcReceiveResponse = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
+    
+        // let acknowledgement = to_binary(&AcknowledgementMsg::<IbcSwapResponse>::Ok(()))?;
+        // assert app-level success
+        let ack: AcknowledgementMsg<IbcSwapResponse> =
+            from_slice(&res.acknowledgement).unwrap();
+        ack.unwrap();
+    }
 }
-
-
