@@ -190,6 +190,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmos-types"
+version = "0.9.0"
+dependencies = [
+ "cosmos-sdk-proto",
+ "cosmwasm-std",
+ "prost",
+ "prost-types",
+ "serde",
+]
+
+[[package]]
 name = "cosmwasm-crypto"
 version = "1.0.0-beta6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -916,6 +927,7 @@ name = "ibc_gamm_osmosis"
 version = "0.0.0"
 dependencies = [
  "cosmos-sdk-proto",
+ "cosmos-types",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",

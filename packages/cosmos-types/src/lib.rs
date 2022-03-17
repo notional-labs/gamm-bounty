@@ -7,7 +7,7 @@ pub mod query;
 pub use crate::{
     base::{ Coin, SwapAmountInRoute},
     tx::{MsgSwapExactAmountIn,MsgJoinPool,MsgSend,MsgJoinSwapExternAmountIn,},
-    query::{},
+    query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse,},
 };
 
 pub use prost_types::Any;

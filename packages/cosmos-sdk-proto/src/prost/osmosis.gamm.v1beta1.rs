@@ -64,3 +64,24 @@ pub struct QuerySpotPriceResponse {
     pub spot_price: ::prost::alloc::string::String,
 }
 
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct 	QuerySwapExactAmountInRequest{
+    /// address is the address to query balances for.
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+
+    #[prost(uint64, tag = "2")]
+    pub pool_id: u64,
+
+    #[prost(string, tag = "3")]
+    pub token_in: ::prost::alloc::string::String,
+
+    #[prost(message, repeated, tag = "4")]
+    pub routes: ::prost::alloc::vec::Vec<SwapAmountInRoute>,
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QuerySwapExactAmountInResponse {
+    #[prost(string, tag = "1")]
+    pub token_out_amount: ::prost::alloc::string::String,  
+}

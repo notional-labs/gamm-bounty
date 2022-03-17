@@ -71,9 +71,17 @@ impl MsgProto for proto::osmosis::gamm::v1beta1::MsgJoinSwapExternAmountIn {
 }
 
 impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySpotPriceRequest {
-    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.QuerySpotPriceRequest";
+    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.Query/SpotPrice";
 }
 
 impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySpotPriceResponse {
     const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.QuerySpotPriceReponse";
+}
+
+impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySwapExactAmountInRequest {
+    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.Query/EstimateSwapExactAmountIn";
+}
+
+impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySwapExactAmountInResponse {
+    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.QuerySwapExactAmountInResponse";
 }
