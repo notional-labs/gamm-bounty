@@ -23,15 +23,18 @@ use crate::msg::{
     IbcSwapPacket,
     SpotPriceQueryPacket, SpotPriceQueryResponse,
     IbcJoinPoolPacket,
+    IbcJoinSwapExternAmountInPacket,
 };
 use cosmos_types::tx::{
     MsgSwapExactAmountIn,
+    MsgJoinPool,
+    MsgJoinSwapExternAmountIn,
 };
 use cosmos_types::msg::Msg;
 use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::execute::execute_set_ibc_denom_for_contract;
 use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID, CHANNEL_ID_TO_CONN_ID};
-use cosmos_types::{SwapAmountInRoute, Coin, MsgJoinPool};
+use cosmos_types::{SwapAmountInRoute, Coin};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
@@ -174,6 +177,13 @@ pub fn ibc_packet_receive(
                 let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
                 receive_join_pool(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, ibc_join_pool)
             }
+            PacketMsg::IbcJoinSwapExternAmountIn{
+                ibc_join_swap_in
+            } => {
+                let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
+                receive_join_swap_in(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, ibc_join_swap_in)
+
+            }
         }
     })()
     .or_else(|e| {
@@ -244,6 +254,46 @@ fn receive_join_pool(
         .add_attribute("action", "receive_join_pool"))
 }
 
+fn receive_join_swap_in(
+    deps: DepsMut,
+    this_contract_address: String,
+    counterparty_port_id: String,
+    conn_id: String,
+    ibc_join_swap_in: IbcJoinSwapExternAmountInPacket,
+) -> StdResult<IbcReceiveResponse>{
+    let (expected_port_id, expected_conn_id) = IBC_DENOM_TO_PORT_AND_CONN_ID.load(deps.storage, &ibc_join_swap_in.token_denom.to_owned())?;
+    
+    if !((counterparty_port_id == expected_port_id ) && ( conn_id == expected_conn_id )){
+        let acknowledgement = encode_ibc_error("source contract don't have permission");
+        return Ok(IbcReceiveResponse::new()
+            .set_ack(acknowledgement)
+            .add_attribute("packet", "receive"));
+    }
+
+    let token_in = Coin {
+        amount: ibc_join_swap_in.token_in,
+        denom: ibc_join_swap_in.token_denom
+    }; 
+
+    let join_pool_msg_any = MsgJoinSwapExternAmountIn{
+        sender: this_contract_address,
+        pool_id: ibc_join_swap_in.pool_id,
+        share_out_min_amount: ibc_join_swap_in.share_out_amount,
+        token_in: token_in,
+    }.to_any().unwrap();
+
+    let join_pool_msg_stargate = CosmosMsg::Stargate{
+        type_url: join_pool_msg_any.type_url,
+        value: join_pool_msg_any.value.into(),
+    };
+
+    let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Ok(()))?;
+
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_message(join_pool_msg_stargate)
+        .add_attribute("action", "receive_join_swap_extern_amount_in_pool"))
+}
 
 fn receive_spot_price_query(    
     deps: DepsMut,

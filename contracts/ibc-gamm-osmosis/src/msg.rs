@@ -39,6 +39,10 @@ pub enum PacketMsg {
 
     IbcJoinPool{
         ibc_join_pool: IbcJoinPoolPacket
+    },
+
+    IbcJoinSwapExternAmountIn{
+        ibc_join_swap_in: IbcJoinSwapExternAmountInPacket
     }
 }
 
@@ -89,4 +93,15 @@ pub struct IbcJoinPoolPacket {
 
     pub token2_amount: String,
     pub token2_denom: String,
+}
+
+//change token1, token2 to vec<Coin> if necessary
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct IbcJoinSwapExternAmountInPacket{
+    pub pool_id: u64,
+
+    pub token_in: String,
+    pub token_denom: String,
+
+    pub share_out_amount: String,
 }
