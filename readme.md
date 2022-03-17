@@ -15,6 +15,43 @@ This contract ensures that a `remote ibc contract` can controll a certain `ibc c
 
 How can we validate if an `ibc coin` belongs to a `remote ibc contract`'s `transfer channel`:
 
-1. [`SetIbcDenomForContractMsg`]() once executed will tie an ibc denom to its respective `transfer channel` 's source chain port id and dest chain connection id (source chain is the coin native chain, dest chain is osmosis)
+1. [`SetIbcDenomForContractMsg`]() once executed will tie an ibc denom to its respective `transfer channel` 's source chain `port id` and dest chain `connection id` (source chain is the coin native chain, dest chain is osmosis)
 
-2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`]() on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](), this contract check if the `port id` of that `remote ibc contract` and the osmosis `connection id` of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom. If true, this contract will execute swap.
+2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`]() on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](), this contract check if the `port id` of that `remote ibc contract` and the `connection id` on osmosis of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom. If true, this contract will execute swap.
+
+## Type of IBC Packet
+SpotPriceQueryPacket
+
+```
+pub struct SpotPriceQueryPacket {
+    pub pool_id: u64,
+    pub in_denom: String,
+    pub out_denom: String,
+    pub with_swap_fee: bool,
+}
+```
+
+IbcSwapPacket
+
+```
+pub struct IbcSwapPacket {
+    pub pool_id: u64,
+    pub in_amount: String,
+    pub in_denom: String, 
+    pub min_out_amount: String,
+    pub out_denom: String,
+    pub to_address: String,
+}
+```
+
+## Type of execute message
+
+SetIbcDenomForContractMsg
+
+```
+pub struct SetIbcDenomForContractMsg {
+    pub ibc_denom: String,    
+    pub contract_channel_id: String,
+    pub contract_native_denom: String,
+}
+```
