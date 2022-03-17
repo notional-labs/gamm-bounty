@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    DepsMut, Response, StdError, StdResult, QueryRequest, IbcQuery, QueryResponse, ChannelResponse
-    , from_binary, from_slice, BankQuery, BalanceResponse
+    DepsMut, Response, StdError, StdResult, IbcQuery, ChannelResponse
 };
 use std::option::Option;
 
@@ -63,14 +62,6 @@ pub fn cal_contract_ibc_denom(contract_port_id: String, contract_channel_id: &st
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use super::*;
-    use cosmwasm_std::testing::{
-        mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
-        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv,
-        mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
-    };
-    use cosmwasm_std::{attr, coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
     #[test]
     fn cal_ibc_denom_works() {
@@ -79,22 +70,4 @@ mod tests {
         let expected_ibc_denom = "ibc/1A757F169E3BB799B531736E060340FF68F37CBCEA881A147D83F84F7D87E828";
         assert_eq!(calculated_ibc_denom, expected_ibc_denom)
     }
-
-    #[test]
-
-    fn Set_ibc_denom_for_contract_msg() {
-        let ibc_denom = "ibc/1A757F169E3BB799B531736E060340FF68F37CBCEA881A147D83F84F7D87E828";
-
-        let msg = SetIbcDenomForContractMsg{
-            ibc_denom: ibc_denom.to_owned(),
-            contract_channel_id: "channel-1".to_string(),
-            contract_native_denom: "denom".to_string(),
-        };
-
-
-    }
-
-
-
-
 }

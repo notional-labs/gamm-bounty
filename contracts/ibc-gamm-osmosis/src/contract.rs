@@ -1,17 +1,15 @@
 
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, CosmosMsg, DepsMut, from_binary, from_slice,
+    entry_point, to_binary, Binary, CosmosMsg, DepsMut, from_binary,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, MessageInfo,  Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgExecutionResponse, SubMsgResult, IbcMsg, QueryRequest, QueryResponse, BalanceResponse, BankMsg
+    QueryRequest, BankMsg
 };
 // use cosmwasm_std::stargaze::StargateResponse;
 
 use cosmwasm_std::{ to_vec};
-use cosmwasm_std::{ Storage};
 use std::convert::TryFrom;
-use std::ops::Deref;
 use std::str;
 
 use crate::{proto};
@@ -21,33 +19,18 @@ use crate::msg::{
     // SetIbcDenomForContractMsg, 
     // IbcSwapPacket, 
     // SpotPriceQueryPacket,
-    IbcSwapResponse,
-    SetIbcDenomForContractMsg,
     PacketMsg,
     IbcSwapPacket,
     SpotPriceQueryPacket, SpotPriceQueryResponse
 };
 use cosmos_types::tx::{
-    MsgSwapExactAmountIn, MsgSend,
+    MsgSwapExactAmountIn,
 };
 use cosmos_types::msg::Msg;
 use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::execute::execute_set_ibc_denom_for_contract;
-use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID,swap_queue, swap_queue_counter_read, swap_queue_counter, swap_queue_read, CHANNEL_ID_TO_CONN_ID};
+use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID, CHANNEL_ID_TO_CONN_ID};
 use cosmos_types::{SwapAmountInRoute, Coin};
-
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::{
-    attr, ContractResult, 
-    IbcChannel, 
-    IbcEndpoint, IbcOrder, IbcPacket, 
- Uint128,  Addr, Attribute,
-};
-
-use core::convert::AsRef;
-use hex::ToHex;
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
@@ -55,13 +38,12 @@ pub const INIT_CALLBACK_ID: u64 = 7890;
 
 #[entry_point]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
-    swap_queue_counter(deps.storage).save(&(0)).unwrap();
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
@@ -80,78 +62,8 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
-    match reply.result {
-        SubMsgResult::Err(err) => {
-            
-            Ok(Response::new().set_data(encode_ibc_error(err)))
-        }
-        SubMsgResult::Ok(response) => {
-            if reply.id < 20 {
-                handle_swap_callback(deps, env.contract.address.into(), reply.id as u8,response)
-            }
-            // else if 20 <= reply.id && reply.id< 40 {
-
-            // }
-            else {
-                Err(StdError::generic_err("invalid reply id"))
-            }
-        }
-    }
-}
-
-pub fn handle_swap_callback(
-    deps: DepsMut,
-    this_contract_address: String,
-    reply_id: u8,
-    response: SubMsgExecutionResponse,
-) -> StdResult<Response> {
-    let to_address = swap_queue_read(deps.storage).load(&[reply_id]).unwrap();
-
-    let coin_out = parse_out_coin_from_event(response.events);
-
-    let send_msg_any = MsgSend{
-        from_address: this_contract_address,
-        to_address: to_address,
-        amount: vec![coin_out],
-    }.to_any().unwrap();
-
-    let send_msg_stargate = CosmosMsg::Stargate{
-        type_url: send_msg_any.type_url,
-        value: send_msg_any.value.into(),
-    };
-
-    let send_msg = SubMsg::new(send_msg_stargate);
-    Ok(Response::new()
-        .add_submessage(send_msg)
-        .add_attribute("action", "execute_init_callback"))
-}
-
-fn parse_out_coin_from_event(events: Vec<Event>) -> Coin {
-    let out_coin = events
-            .into_iter()
-            .find(|e| e.ty == "token_swapped")
-            .and_then(|ev| {
-                ev.attributes
-                    .into_iter()
-                    .find(|a| a.key == "tokens_out")
-            })
-            .map(|a| a.value).unwrap();
-
-    let mut seperator_index = 0;
-
-    for (i, c) in out_coin.chars().enumerate() {
-        if c.is_alphabetic() {
-            seperator_index = i;
-            break;
-        }
-    }
-    let amount = out_coin[..seperator_index].to_string();
-    let denom = out_coin[seperator_index..].to_string();
-    Coin{
-        denom: denom,
-        amount: amount,
-    }   
+pub fn reply(_deps: DepsMut, _env: Env, _reply: Reply) -> StdResult<Response> {
+    Ok(Response::new())
 }
 
 #[entry_point]
@@ -277,17 +189,6 @@ pub fn ibc_packet_receive(
 //         swap_queue_counter(storage).save(&(0)).unwrap();
 //     }
 // }
-
-fn get_and_increment_swap_queue_counter(storage: &mut dyn Storage) -> u8 {
-    let current_counter = swap_queue_counter_read(storage).load().unwrap();
-    if current_counter != 19 {
-        swap_queue_counter(storage).save(&(current_counter + 1)).unwrap();
-    }
-    else {
-        swap_queue_counter(storage).save(&(0)).unwrap();
-    }
-    current_counter
-}
 
 fn receive_spot_price_query(    
     deps: DepsMut,
@@ -490,11 +391,12 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
-        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
-        mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_ibc_channel_connect_ack,
+        mock_ibc_channel_open_init, mock_ibc_packet_recv, mock_info,
+        MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{attr, coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg, IbcOrder};
+    use cosmwasm_std::{from_slice, OwnedDeps, IbcOrder};
+    use crate::msg::{IbcSwapResponse};
 
     const CREATOR: &str = "creator";
 
@@ -508,7 +410,7 @@ mod tests {
         // then we connect (with counter-party version set)
         let handshake_connect =
             mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+        ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
     }
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -556,15 +458,6 @@ mod tests {
         let mut deps = setup();
 
         let channel_id = "channel-123";
-
-        let ibc_denom = "ibc/1A757F169E3BB799B531736E060340FF68F37CBCEA881A147D83F84F7D87E828";
-
-        let msg = SetIbcDenomForContractMsg{
-            ibc_denom: ibc_denom.to_owned(),
-            contract_channel_id: "channel-1".to_string(),
-            contract_native_denom: "denom".to_string(),
-        };
-
 
         let ibc_swap_packet = IbcSwapPacket {
             pool_id: 1,
