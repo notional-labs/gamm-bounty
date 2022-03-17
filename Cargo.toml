@@ -1,7 +1,7 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
 
-[profile.release.package.gamm_contract]
+[profile.release.package.ibc_gamm_juno]
 codegen-units = 1
 incremental = false
 
