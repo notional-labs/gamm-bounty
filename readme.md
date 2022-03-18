@@ -9,15 +9,10 @@ Let's called this feature `instant ibc swap`.
 
 ## Concept
 
-If a remote `ibc contract` wants `instant ibc swap` feature, it will have to send its ibc coin to `this contract account`. Then, it will have to establish a channel connect to `this contract`. Let's called this channel `ibc-gamm channel`
+This contract is esenstially an ica module with its account being kinda like the ica account. However, the functionality is much more flexible and versatile than ica :
 
-This contract ensures that a `remote ibc contract` can controll a certain `ibc coin` held by `this contract account` only if that `ibc coin` comes from that `remote ibc contract`'s `transfer channel`.
+1. This contract account is not only controlled by only one remote account. It can be controlled by any remote account (weather that it's a contract account or just a regular account). But there's a catch, a remote account can only controll just the fund it sends to this contract account. For example, If remote contract A from juno chain send 50 juno to this contract account via ibc transfer, A can only use a total of 50 juno to `instant ibc swap`.
 
-How can we validate if an `ibc coin` belongs to a `remote ibc contract`'s `transfer channel`:
-
-1. [`SetIbcDenomForContractMsg`]() once executed will tie an ibc denom to its respective `transfer channel` 's source chain `port id` and dest chain `connection id` (source chain is the coin native chain, dest chain is osmosis)
-
-2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`]() on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](), this contract check if the `port id` of that `remote ibc contract` and the `connection id` on osmosis of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom. If true, this contract will execute swap.
 
 ## Type of IBC Packet
 SpotPriceQueryPacket
