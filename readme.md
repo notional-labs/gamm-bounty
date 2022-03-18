@@ -19,6 +19,8 @@ How can we validate if an `ibc coin` belongs to a `remote ibc contract`'s `trans
 
 2. If a `remote ibc contract` wants to swap on a osmosis pool using a certain `ibc coin` held by `this contract account`, it will have to send an [`IbcSwapPacket`](https://github.com/notional-labs/gamm-bounty/blob/af61c1d62afcf045a167360c093320a79080696c/contracts/ibc-gamm-osmosis/src/msg.rs#L42) on its `ibc-gamm channel`. Upon receiving [`IbcSwapPacket`](https://github.com/notional-labs/gamm-bounty/blob/af61c1d62afcf045a167360c093320a79080696c/contracts/ibc-gamm-osmosis/src/msg.rs#L42), this contract check if the `port id` of that `remote ibc contract` and the `connection id` on osmosis of its `ibc-gamm channel` match the source chain `port id` and dest chain `connection id` tied to that `ibc coin`'s denom (source chain `port id` and dest chain `connection id` for an ibc denom is set like what I mentioned above). If true, this contract will execute swap.
 
+This validating mechanism makes the contract permissionless ( every remote contract can connect to this contract to have `instant ibc swap` feature for its token ). It also removes the need for a gov contract admin as the process of checking if a contract controll an ibc coin is fully autonomous.
+
 ## Type of IBC Packet
 SpotPriceQueryPacket
 
