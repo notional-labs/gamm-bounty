@@ -3,7 +3,7 @@ use cosmwasm_std::{
     entry_point, to_binary, Binary, CosmosMsg, DepsMut, from_binary,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, MessageInfo,  Reply, Response, StdError, StdResult,
+    IbcReceiveResponse, MessageInfo, Response, StdError, StdResult,
     QueryRequest, BankMsg
 };
 // use cosmwasm_std::stargaze::StargateResponse;
@@ -28,8 +28,8 @@ use cosmos_types::tx::{
 };
 use cosmos_types::msg::Msg;
 use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
-use crate::execute::execute_set_ibc_denom_for_contract;
-use crate::state::{IBC_DENOM_TO_PORT_AND_CONN_ID, CHANNEL_ID_TO_CONN_ID};
+use crate::execute::execute_fund;
+use crate::state::{CONTRACTS_FUND, CHANNEL_ID_TO_CONN_ID, get_contract_key};
 use cosmos_types::{SwapAmountInRoute, Coin};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
@@ -51,19 +51,14 @@ pub fn instantiate(
 pub fn execute(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::SetIbcDenomForContract(msg) => {
-            execute_set_ibc_denom_for_contract(deps, msg)
+        ExecuteMsg::Fund(msg) => {
+            execute_fund(deps, info, msg)
         },
     }
-}
-
-#[entry_point]
-pub fn reply(_deps: DepsMut, _env: Env, _reply: Reply) -> StdResult<Response> {
-    Ok(Response::new())
 }
 
 #[entry_point]
@@ -160,7 +155,9 @@ pub fn ibc_packet_receive(
                 ibc_swap_packet
             } => {
                 let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
-                receive_swap(deps, env.contract.address.into(), counterparty_contract_port_id, conn_id, ibc_swap_packet)
+                let contract_key = get_contract_key(conn_id, counterparty_contract_port_id);
+
+                receive_swap(deps, env.contract.address.into(), contract_key, ibc_swap_packet)
             },
             PacketMsg::SpotPriceQuery {
                 spot_price_query_packet
@@ -179,16 +176,6 @@ pub fn ibc_packet_receive(
             .add_event(Event::new("ibc").add_attribute("packet", "receive")))
     })
 }
-
-// fn increment_swap_queue_counter(storage: &mut dyn Storage) {
-//     let current_counter = swap_queue_counter_read(storage).load().unwrap();
-//     if current_counter != 19 {
-//         swap_queue_counter(storage).save(&(current_counter + 1)).unwrap();
-//     }
-//     else {
-//         swap_queue_counter(storage).save(&(0)).unwrap();
-//     }
-// }
 
 fn receive_spot_price_query(    
     deps: DepsMut,
@@ -218,39 +205,11 @@ fn receive_spot_price_query(
     res_proto = prost::Message::decode(&*spot_price_x).unwrap();
     let res: QuerySpotPriceResponse = TryFrom::try_from(res_proto).unwrap();
 
-    // let spot_price = String::from_utf8(spot_price_x)?;
-
-    // let cosmos_tx_proto : proto::ibc::applications::interchain_accounts::v1::CosmosTx;
-    // cosmos_tx_proto =  prost::Message::decode(res_bin.response.into()).unwrap();
-
-    // ==========================
-    // let stargate_query = QueryRequest::Stargate{
-    //     path: req.type_url,
-    //     data: req.value.into(),
-    // }.into();
-
-    // let s: QuerySpotPriceResponse = deps.querier.query(&stargate_query)?;
-
-    // ===========================
-
-    // let test_res = QuerySpotPriceResponse {
-    //     spot_price: "1.022258688245249243".to_string(),
-    // };
-
-    // let test_vec = to_vec(&test_res)?;
-    // let test_string = String::from_utf8(test_vec)?;
-
-    // return Err(StdError::generic_err(test_string));
-
-    // ==========================
-    
     let spot_price_query_response = SpotPriceQueryResponse{
         spot_price: res.spot_price,
     };
 
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(spot_price_query_response))?;
-
-    // add to_address to swap queue
 
     Ok(IbcReceiveResponse::new()
         .set_ack(acknowledgement)
@@ -286,26 +245,27 @@ fn query_swap_exact_amount_in(deps: DepsMut, this_contract_address: String, pool
 
     Ok(out_amount)
 }
-// fn get_swap_queue_counter(storage: &dyn Storage) -> u8 {
-//     swap_queue_counter_read(storage).load().unwrap()
-// }
 
-// processes PacketMsg::Dispatch variant
 fn receive_swap(
     deps: DepsMut,
     this_contract_address: String,
-    counterparty_port_id: String,
-    conn_id: String,
+    contract_key: String,
     ibc_swap_packet: IbcSwapPacket,
 ) -> StdResult<IbcReceiveResponse> {
-    let (expected_port_id, expected_conn_id) = IBC_DENOM_TO_PORT_AND_CONN_ID.load(deps.storage, &ibc_swap_packet.in_denom.to_owned())?;
+    let funded_amount = CONTRACTS_FUND.load(deps.storage, (contract_key.to_owned(), ibc_swap_packet.in_denom.to_string()))?;
 
-    if !((counterparty_port_id == expected_port_id ) && ( conn_id == expected_conn_id )){
-        let acknowledgement = encode_ibc_error("contract don't have permission to move fund");
+    let swap_amount = ibc_swap_packet.min_out_amount.parse().unwrap();
+
+    if funded_amount < swap_amount {
+        let acknowledgement = encode_ibc_error("not enough fund");
         return Ok(IbcReceiveResponse::new()
             .set_ack(acknowledgement)
             .add_attribute("packet", "receive"));
     }
+
+    let left_amount = funded_amount - swap_amount;
+    
+    CONTRACTS_FUND.save(deps.storage, (contract_key, ibc_swap_packet.in_denom.to_string()), &left_amount)?;
 
     let route = SwapAmountInRoute{
         pool_id : ibc_swap_packet.pool_id,
@@ -348,17 +308,8 @@ fn receive_swap(
         to_address: ibc_swap_packet.to_address,
         amount: vec![out_coin],
     };
-    // let msg: CosmosMsg = bank_msg.clone().into();
 
-    // let cosmos_msgs = [CosmosMsg::Bank(bank_msg.clone())];
-
-    // get current position of swap request in the swap queue
-    // let current_counter = get_and_increment_swap_queue_counter(deps.storage);
-    // let swap_submsg = SubMsg::reply_always(swap_msg_stargate, current_counter.into());
     let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Ok(()))?;
-
-    // add to_address to swap queue
-    // swap_queue(deps.storage).save(&[current_counter], &ibc_swap_packet.to_address)?;
 
     Ok(IbcReceiveResponse::new()
         .set_ack(acknowledgement)
@@ -476,8 +427,8 @@ mod tests {
         // register the channel
         connect(deps.as_mut(), channel_id);
 
-        CHANNEL_ID_TO_CONN_ID.save(deps.as_mut().storage, channel_id, &"connection-2".to_string()).unwrap();
-        IBC_DENOM_TO_PORT_AND_CONN_ID.save(deps.as_mut().storage, "test", &("their-port".to_owned(), "connection-2".to_owned())).unwrap();
+        // CHANNEL_ID_TO_CONN_ID.save(deps.as_mut().storage, channel_id, &"connection-2".to_string()).unwrap();
+        // IBC_DENOM_TO_PORT_AND_CONN_ID.save(deps.as_mut().storage, "test", &("their-port".to_owned(), "connection-2".to_owned())).unwrap();
 
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)

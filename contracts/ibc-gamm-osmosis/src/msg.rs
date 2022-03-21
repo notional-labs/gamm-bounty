@@ -15,16 +15,13 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    SetIbcDenomForContract(SetIbcDenomForContractMsg),
+    Fund(FundMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct SetIbcDenomForContractMsg {
-    pub ibc_denom: String,
-    
-    pub contract_channel_id: String,
-    // denom of that contract token on the native chain
-    pub contract_native_denom: String,
+pub struct FundMsg {
+    pub contract_port_id: String,
+    pub contract_connection_id: String, 
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
