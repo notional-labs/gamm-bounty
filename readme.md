@@ -11,4 +11,4 @@ Let's called this feature `instant ibc swap`.
 
 This contract is esenstially an ica module with its account being kinda like the ica account. However, the functionality is much more flexible and versatile than ica :
 
-1. This contract account is not only controlled by only one remote account. It can be controlled by any remote account (weather that it's a contract account or just a regular account). But there's a catch, a remote account can only controll just the fund it sends to this contract account. For example, If remote contract A from juno chain send 50 juno to this contract account via ibc transfer, A can only use a total of 50 juno to `instant ibc swap`.
+1. This contract account is not only controlled by only one remote account. It can be controlled by any remote account (weather that it's a contract account or just a regular account). But there's a catch, a remote account can only controll just the fund it sends to this contract account. For example, If remote contract A from juno chain send 50 ibc juno to this contract account. A can only use a total of 50 juno to `instant ibc swap`.
