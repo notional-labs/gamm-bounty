@@ -54,5 +54,11 @@ pub mod osmosis {
         pub mod v1beta1 {
             include!("prost/osmosis.gamm.v1beta1.rs");
         }
+
+        pub mod pool_model {
+            pub mod balancer {
+                include!("prost/osmosis.gamm.pool_models.balancer.rs");
+            }
+        }
     }
 }

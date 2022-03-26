@@ -1,13 +1,16 @@
 pub mod msg;
 mod prost_ext;
-pub mod tx;
 mod base;
-pub mod query;
+pub mod gamm;
+pub mod bank;
 
 pub use crate::{
-    base::{ Coin, SwapAmountInRoute},
-    tx::{MsgSwapExactAmountIn,MsgJoinPool,MsgSend,MsgJoinSwapExternAmountIn,},
-    query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse,},
+    base::{ Coin, },
+    gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, 
+        QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse, 
+        QueryPoolRequest, QueryPoolResponse,
+        SwapAmountInRoute, Pool},
+    bank::{MsgSend},
 };
 
 pub use prost_types::Any;

@@ -6,7 +6,6 @@ use cosmwasm_std::{
     IbcReceiveResponse, MessageInfo, Response, StdError, StdResult,
     QueryRequest, BankMsg
 };
-// use cosmwasm_std::stargaze::StargateResponse;
 
 use cosmwasm_std::{ to_vec};
 use std::convert::TryFrom;
@@ -16,18 +15,15 @@ use crate::{proto};
 use crate::msg::{
     AcknowledgementMsg, 
     InstantiateMsg, ExecuteMsg, 
-    // SetIbcDenomForContractMsg, 
-    // IbcSwapPacket, 
-    // SpotPriceQueryPacket,
     PacketMsg,
     IbcSwapPacket,
     SpotPriceQueryPacket, SpotPriceQueryResponse
 };
-use cosmos_types::tx::{
-    MsgSwapExactAmountIn,
+use cosmos_types::gamm::{
+    MsgSwapExactAmountIn, QueryPoolRequest, QueryPoolResponse, Pool,
 };
-use cosmos_types::msg::Msg;
-use cosmos_types::query::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
+use cosmos_types::msg::{Msg,MsgProto};
+use cosmos_types::gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::execute::execute_fund;
 use crate::state::{CONTRACTS_FUND, CHANNEL_ID_TO_CONN_ID, get_contract_key};
 use cosmos_types::{SwapAmountInRoute, Coin};
@@ -156,7 +152,6 @@ pub fn ibc_packet_receive(
             } => {
                 let conn_id = CHANNEL_ID_TO_CONN_ID.load(deps.storage, &chann_id)?;
                 let contract_key = get_contract_key(conn_id, counterparty_contract_port_id);
-
                 receive_swap(deps, env.contract.address.into(), contract_key, ibc_swap_packet)
             },
             PacketMsg::SpotPriceQuery {
@@ -213,7 +208,6 @@ fn receive_spot_price_query(
 
     Ok(IbcReceiveResponse::new()
         .set_ack(acknowledgement)
-    
     )
 }
 
@@ -245,6 +239,31 @@ fn query_swap_exact_amount_in(deps: DepsMut, this_contract_address: String, pool
 
     Ok(out_amount)
 }
+
+fn query_pool(deps: DepsMut, pool_id: u64) -> StdResult<Pool> {
+    let req = QueryPoolRequest {
+        pool_id: pool_id,
+    }.to_any().unwrap();
+
+    let stargate_query: QueryRequest<u8> = QueryRequest::Stargate{
+        path: req.type_url,
+        data: req.value.into(),
+    }.into();
+
+    let raw = to_vec(&stargate_query).map_err(|serialize_err| {
+        StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+    })?;
+
+    let res_x: Vec<u8> = deps.querier.raw_query(&raw).unwrap().unwrap().into();
+
+    let res_proto : proto::osmosis::gamm::v1beta1::QueryPoolResponse;
+    res_proto = prost::Message::decode(&*res_x).unwrap();
+    let res: QueryPoolResponse = TryFrom::try_from(res_proto).unwrap();
+
+    let pool: Pool = Msg::from_any(&res.pool).unwrap();
+    Ok(pool)
+}
+
 
 fn receive_swap(
     deps: DepsMut,

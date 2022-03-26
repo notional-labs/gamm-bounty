@@ -85,3 +85,15 @@ impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySwapExactAmountInRequest {
 impl MsgProto for proto::osmosis::gamm::v1beta1::QuerySwapExactAmountInResponse {
     const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.QuerySwapExactAmountInResponse";
 }
+
+impl MsgProto for proto::osmosis::gamm::v1beta1::QueryPoolRequest {
+    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.Query/Pool";
+}
+
+impl MsgProto for proto::osmosis::gamm::v1beta1::QueryPoolResponse {
+    const TYPE_URL: &'static str = "/osmosis.gamm.v1beta1.QueryPoolResponse";
+}
+
+impl MsgProto for proto::osmosis::gamm::pool_model::balancer::Pool {
+    const TYPE_URL: &'static str = "";
+}

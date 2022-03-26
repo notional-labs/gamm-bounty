@@ -85,3 +85,23 @@ pub struct QuerySwapExactAmountInResponse {
     #[prost(string, tag = "1")]
     pub token_out_amount: ::prost::alloc::string::String,  
 }
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PoolAsset {
+    #[prost(message, optional, tag = "1")]
+    pub token: ::core::option::Option<super::super::super::cosmos::base::v1beta1::Coin>,
+    #[prost(string, tag = "2")]
+    pub weight: ::prost::alloc::string::String,
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct 	QueryPoolRequest{
+    #[prost(uint64, tag = "1")]
+    pub pool_id: u64,
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct 	QueryPoolResponse{
+    #[prost(message, optional, tag = "1")]
+    pub pool: ::core::option::Option<::prost_types::Any>,
+}
