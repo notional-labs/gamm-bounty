@@ -151,6 +151,37 @@ impl From<&Pool> for proto::osmosis::gamm::pool_model::balancer::Pool {
     }
 }
 
+pub fn SolveConstantFunctionInvariant(
+    token_balance_fixed_before: f64,
+    token_balance_fixed_after: f64,
+    token_weight_fixed: f64,
+    token_balance_unknown_before: f64,
+    token_weight_unknown: f64,
+) -> f64 {
+    let weight_ratio = token_weight_fixed / token_weight_unknown;
+
+    let y = token_balance_fixed_before / token_balance_fixed_after;
+
+    let foo = y.powf(weight_ratio);
+
+    let mutiplier = 1f64 - foo;
+
+    token_balance_unknown_before * mutiplier
+}
+
+pub fn CalcOutGivenIn(
+    token_balance_in: f64,
+    token_weight_in: f64,
+    token_balance_out: f64,
+    token_weight_out: f64,
+    token_amount_in: f64,
+    swap_fee: f64,
+) -> f64 {
+    let token_amount_in_after_fee = token_amount_in * (1f64 - swap_fee);
+    SolveConstantFunctionInvariant(token_balance_in, token_balance_in + token_amount_in_after_fee, token_weight_in, token_balance_out, token_weight_out)
+}
+
+
 impl Pool {
     fn GetPoolAsset(&self, denom: String) -> StdResult<&PoolAsset> {
         for pool_asset in &self.pool_assets {
@@ -161,7 +192,21 @@ impl Pool {
         return Err(StdError::generic_err("pool asset not found"))
     }
 
-    fn Cal
+
+
+    fn CalOutShareAmount(&self, token_in: Coin) -> StdResult<f64> {
+        let in_amount = token_in.amount;
+
+        let pool_asset = self.GetPoolAsset(token_in.denom)?;
+
+        let normalized_weight = pool_asset.weight / self.total_weight;
+
+        let token_amount_in_after_fee = in_amount
+
+
+
+
+    }
     
 
 
