@@ -169,16 +169,23 @@ pub fn SolveConstantFunctionInvariant(
     token_balance_unknown_before * mutiplier
 }
 
-pub fn CalcOutGivenIn(
+pub fn FeeRatio(
+    normalized_weight: f64,
+    swap_fee: f64
+) -> f64 {
+    let zar = (1f64 - normalized_weight) * swap_fee;
+    1f64 - zar
+}
+
+pub fn CalcPoolOutGivenSingleIn(
     token_balance_in: f64,
-    token_weight_in: f64,
-    token_balance_out: f64,
-    token_weight_out: f64,
+    normalized_token_weight_in: f64,
+    pool_supply: f64,
     token_amount_in: f64,
     swap_fee: f64,
 ) -> f64 {
-    let token_amount_in_after_fee = token_amount_in * (1f64 - swap_fee);
-    SolveConstantFunctionInvariant(token_balance_in, token_balance_in + token_amount_in_after_fee, token_weight_in, token_balance_out, token_weight_out)
+    let token_amount_in_after_fee = token_amount_in * FeeRatio(normalized_token_weight_in, swap_fee);
+    - SolveConstantFunctionInvariant(token_balance_in + token_amount_in_after_fee, token_balance_in, normalized_token_weight_in, pool_supply,1f64)     
 }
 
 
@@ -192,27 +199,20 @@ impl Pool {
         return Err(StdError::generic_err("pool asset not found"))
     }
 
-
-
-    fn CalOutShareAmount(&self, token_in: Coin) -> StdResult<f64> {
-        let in_amount = token_in.amount;
-
+    fn CalOutShareAmount(&self, token_in: Coin) -> StdResult<u64> {
         let pool_asset = self.GetPoolAsset(token_in.denom)?;
 
         let normalized_weight = pool_asset.weight / self.total_weight;
 
-        let token_amount_in_after_fee = in_amount
-
-
-
-
+        let share_out_amount = CalcPoolOutGivenSingleIn(
+            pool_asset.token.amount as f64, 
+            normalized_weight,
+            self.total_shares.amount as f64,
+            token_in.amount as f64,
+            self.swap_fee
+        ).floor();
+        Ok(share_out_amount as u64)
     }
-    
-
-
-
-
-
 }
 
 

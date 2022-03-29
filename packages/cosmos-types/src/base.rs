@@ -13,7 +13,7 @@ pub struct Coin {
     pub denom: String,
 
     /// Amount
-    pub amount: String,
+    pub amount: u64,
 }
 
 impl fmt::Display for Coin{

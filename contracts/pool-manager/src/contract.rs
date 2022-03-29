@@ -54,9 +54,9 @@ pub fn execute(
         ExecuteMsg::Fund(msg) => {
             execute_fund(deps, info, msg)
         },
-        // ExecuteMsg::UpdateEpoch(msg) => {
-
-        // },
+        ExecuteMsg::UpdateEpoch(msg) => {
+            Err(StdError::generic_err("sdaf"))
+        },
     }
 }
 
