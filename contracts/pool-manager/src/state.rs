@@ -7,6 +7,7 @@ use schemars::JsonSchema;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct EpochState {
+    pub epoch_id: u64,
     // reward per gamm bonded up until this epoch
     pub total_reward_per_gamm: Vec<DecCoin>,
 }
@@ -31,12 +32,11 @@ pub const CONFIG: Item<Config> = Item::new("config");
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
 pub struct LastEpochUpdated {
     pub epoch_id: u64,
-    
 }
 
 pub const CONTRACT_BALANCES: Map<String, u64> = Map::new("contract_balances");
 
-pub const 
+pub const MOVED_COINS: Map<String, u64> = Map::new("moved_coins");
 
 pub const LASTEST_UPDATED_EPOCH: Item<u64> = Item::new("last_epoch_updated");
 

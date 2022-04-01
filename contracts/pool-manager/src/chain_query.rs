@@ -61,3 +61,5 @@ pub fn query_current_epoch_id(deps: DepsMut) -> StdResult<u64> {
 
     Ok(res.current_epoch)
 }
+
+pub fn 
