@@ -61,4 +61,9 @@ pub mod osmosis {
             }
         }
     }
+    pub mod epochs {
+        pub mod v1beta1 {
+            include!("prost/osmosis.epochs.v1beta1.rs");
+        }
+    }
 }

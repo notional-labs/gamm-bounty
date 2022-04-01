@@ -5,7 +5,7 @@ use cosmwasm_std::{
 use crate::msg::{
   FundMsg, UpdateEpochMsg
 };
-use crate::state::{REMOTE_CONTRACT_BALANCES, get_contract_identifier};
+use crate::state::{get_contract_identifier};
 
 pub fn execute_update_epoch(
     deps: DepsMut,

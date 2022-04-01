@@ -97,3 +97,11 @@ impl MsgProto for proto::osmosis::gamm::v1beta1::QueryPoolResponse {
 impl MsgProto for proto::osmosis::gamm::pool_model::balancer::Pool {
     const TYPE_URL: &'static str = "";
 }
+
+impl MsgProto for proto::osmosis::epochs::v1beta1::QueryCurrentEpochRequest {
+    const TYPE_URL: &'static str = "/osmosis.epochs.v1beta1.Query/CurrentEpoch";
+}
+
+impl MsgProto for proto::osmosis::epochs::v1beta1::QueryCurrentEpochResponse {
+    const TYPE_URL: &'static str = "/osmosis.epochs.v1beta1.QueryCurrentEpochResponse";
+}

@@ -2,12 +2,24 @@
 
 use crate::{proto};
 use cosmwasm_std::{StdResult, StdError};
+use serde::{Deserialize, Serialize};
+
 
 use core::convert::TryFrom;
 use std::fmt;
 
 /// Coin defines a token with a denomination and an amount.
-#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
+pub struct DecCoin {
+    /// Denomination
+    pub denom: String,
+
+    /// Amount
+    pub amount: f64,
+}
+
+/// Coin defines a token with a denomination and an amount.
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Serialize, Deserialize,)]
 pub struct Coin {
     /// Denomination
     pub denom: String,

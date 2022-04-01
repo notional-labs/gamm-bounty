@@ -1,32 +1,48 @@
-use cw_storage_plus::{Map, Item};
-use cosmwasm_std::{Uint128};
-use cosmos_types::{Coin};
+use cw_storage_plus::{Map, Item, };
+use cosmwasm_std::{Uint128, Storage};
+use cosmos_types::{Coin, DecCoin};
+use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
+pub struct EpochState {
+    // reward per gamm bonded up until this epoch
+    pub total_reward_per_gamm: Vec<DecCoin>,
+}
+
+pub const EPOCHSTATES: Map<u64, EpochState> = Map::new("epochstates");
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
 pub struct Config {
-    epoch: u64,
-    updated: bool,
+    pub first_epoch: u64,
+
+    pub pool_id: u64,
+
+    pub incentivized_reward_denoms: Vec<String>,
+
+    pub gamm_denom: String,
+
+    pub asset_denoms: (String, String)
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
 
-// a remote contract is identified by (connection id + remote port id) connection id + "/" + remote port id
-// this map (remote contract identifier, denom) to amount 
-pub const REMOTE_CONTRACT_BALANCES: Map<(String,String), Uint128> = Map::new("remote_contract_balances");
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+pub struct LastEpochUpdated {
+    pub epoch_id: u64,
+    
+}
 
-// this map channel id to its connection id
-pub const CHANNEL_ID_TO_CONN_ID: Map<&str, String> = Map::new("channel_id_to_conn_id");
+pub const CONTRACT_BALANCES: Map<String, u64> = Map::new("contract_balances");
+
+pub const 
+
+pub const LASTEST_UPDATED_EPOCH: Item<u64> = Item::new("last_epoch_updated");
 
 // a remote account is identified by contract identifier and remote account address (contract identifier + "/" + remote account address)
 // this map (remote account identifier, denom) to amount
 pub const REMOTE_ACCOUNT_BALANCES: Map<(String, String), Uint128> = Map::new("remote_address_balances");
 
 // this map a remote account identifier to all the gamm coins it owns
-pub const GAMM_VAULT: Map<&str, Vec<Coin>> = Map::new("gamm_vault");
-
-pub fn get_remote_address_identifier(contract_identifier: String, remote_address: String) -> String {
-    contract_identifier + "/" + &remote_address
-}
-
-pub fn get_contract_identifier(contract_connection_id: String, contract_port_id: String) -> String {
-    contract_connection_id + "/" + &contract_port_id
-}
+pub const GAMM_VAULT: Map<&str, Uint128> = Map::new("gamm_vault");
