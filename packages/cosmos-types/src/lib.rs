@@ -4,6 +4,7 @@ mod base;
 pub mod gamm;
 pub mod bank;
 pub mod epochs;
+pub mod incentives;
 
 pub use crate::{
     base::{ Coin, DecCoin},
@@ -13,6 +14,7 @@ pub use crate::{
         SwapAmountInRoute, Pool},
     bank::{MsgSend},
     epochs::{QueryCurrentEpochRequest, QueryCurrentEpochResponse},
+    incentives::{RewardsEstRequest, RewardsEstResponse},
 };
 
 pub use prost_types::Any;

@@ -42,6 +42,8 @@ use cosmos_types::{
     QueryCurrentEpochRequest
 };
 
+
+
 pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> StdResult<Response> {
     let current_epoch = query_current_epoch_id(deps)?;
 

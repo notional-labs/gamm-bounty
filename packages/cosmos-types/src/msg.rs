@@ -105,3 +105,11 @@ impl MsgProto for proto::osmosis::epochs::v1beta1::QueryCurrentEpochRequest {
 impl MsgProto for proto::osmosis::epochs::v1beta1::QueryCurrentEpochResponse {
     const TYPE_URL: &'static str = "/osmosis.epochs.v1beta1.QueryCurrentEpochResponse";
 }
+
+impl MsgProto for proto::osmosis::incentives::RewardsEstRequest {
+    const TYPE_URL: &'static str = "/osmosis.incentives.Query/RewardsEst";
+}
+
+impl MsgProto for proto::osmosis::incentives::RewardsEstResponse {
+    const TYPE_URL: &'static str = "osmosis.incentives.RewardsEstResponse";
+}
