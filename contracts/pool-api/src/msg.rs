@@ -22,6 +22,11 @@ pub struct InitPoolApiServiceMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct SetLockIdsMsg {
+    pub lock_ids: (String, String, String),
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct UpdateEpochMsg {
 }
 
@@ -30,6 +35,15 @@ pub struct UpdateEpochMsg {
 pub enum QueryMsg {
     LastestEpochTotalLockUp(QueryLastestEpochTotalLockUp),
     EpochTotalLockUp(QueryEpochTotalLockUp),
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct QueryReward {
+    pub from_epoch: u64,
+    pub to_epoch: u64,
+    pub duration: String,
+    pub amount: u128,
+    pub pool_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

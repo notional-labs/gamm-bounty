@@ -34,6 +34,8 @@ pub struct LastEpochUpdated {
     pub epoch_id: u64,
 }
 
+pub
+
 pub const CONTRACT_BALANCES: Map<String, u64> = Map::new("contract_balances");
 
 pub const MOVED_COINS: Map<String, u64> = Map::new("moved_coins");

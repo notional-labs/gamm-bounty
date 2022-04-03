@@ -31,7 +31,7 @@ use cosmos_types::epochs::{
 };
 use cosmos_types::msg::{Msg,MsgProto};
 use cosmos_types::gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
-use crate::state::{LASTEST_UPDATED_EPOCH, POOLS, Pool, GAMM_BONDED_EACH_POOL, TOTAL_REWARD_EACH_EPOCH, TotalGammBonded, POOLS_STATE_AT_EACH_EPOCH, get_pool_at_epoch_key};
+use crate::state::{LASTEST_UPDATED_EPOCH, POOLS, PoolInfo, GAMM_BONDED_EACH_POOL, TOTAL_REWARD_EACH_EPOCH, TotalGammBonded, POOLS_STATE_AT_EACH_EPOCH, get_pool_at_epoch_key};
 use cosmos_types::{SwapAmountInRoute, Coin};
 use crate::chain_query::{query_current_epoch_id}; 
 use cosmwasm_std::{Order};
@@ -58,7 +58,7 @@ pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> Std
         balances_map[&balance.denom] = balance.amount.into();
     }
 
-    let pools : Vec<(u64, Pool)> = POOLS
+    let pools : Vec<(u64, PoolInfo)> = POOLS
         .range_de(deps.storage, None, None, Order::Ascending)
         .map(|item| item.map(Into::into))
         .collect::<StdResult<_>>()?;
@@ -73,7 +73,7 @@ pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> Std
 }
 
 
-pub fn update_epoch_pool(deps: DepsMut, pool: Pool, epoch_id: u64, pool_id: u64, contract_balances_map: &HashMap<String, u128>) {
+pub fn update_epoch_pool(deps: DepsMut, pool: PoolInfo, epoch_id: u64, pool_id: u64, contract_balances_map: &HashMap<String, u128>) {
     let total_lock_up = TotalGammBonded{
         lock_1_day: 0,
         lock_7_day: 0,
@@ -103,7 +103,7 @@ pub fn update_epoch_pool(deps: DepsMut, pool: Pool, epoch_id: u64, pool_id: u64,
 
 
 pub fn execute_pool_api_service(deps: DepsMut, pool_id: u64) {
-
+    
 
 
 

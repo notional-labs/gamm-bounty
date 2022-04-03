@@ -66,4 +66,11 @@ pub mod osmosis {
             include!("prost/osmosis.epochs.v1beta1.rs");
         }
     }
+    pub mod lockup {
+        include!("prost/osmosis.lockup.rs");
+    }
+    pub mod incentives {
+        include!("prost/osmosis.incentives.rs");
+    }
+
 }

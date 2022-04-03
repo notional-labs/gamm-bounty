@@ -1,0 +1,25 @@
+[package]
+name = "chain-query"
+version = "0.9.0"
+description = "Protobuf stuct defintions for interacting Cosmos SDK powered blockchains"
+readme = "README.md"
+categories = ["cryptography", "cryptography::cryptocurrencies", "database"]
+keywords = ["blockchain", "cosmos", "tendermint", "proto"]
+edition = "2018"
+rust-version = "1.56"
+
+[dependencies]
+cosmwasm-std = { version = "1.0.0-beta6", features = ["iterator", "staking", "stargate"] }
+prost = "0.9"
+prost-types = "0.9"
+cosmos-sdk-proto = { version = "0.9", default-features = false, path = "../cosmos-sdk-proto" }
+serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+
+# Optional dependencies
+
+[features]
+cosmwasm = []
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
