@@ -113,3 +113,11 @@ impl MsgProto for proto::osmosis::incentives::RewardsEstRequest {
 impl MsgProto for proto::osmosis::incentives::RewardsEstResponse {
     const TYPE_URL: &'static str = "osmosis.incentives.RewardsEstResponse";
 }
+
+impl MsgProto for proto::osmosis::lockup::LockedDenomRequest {
+    const TYPE_URL: &'static str = "/osmosis.lockup.Query/LockedDenom";
+}
+
+impl MsgProto for proto::osmosis::lockup::LockedDenomResponse {
+    const TYPE_URL: &'static str = "osmosis.lockup.LockedDenomResponse";
+}

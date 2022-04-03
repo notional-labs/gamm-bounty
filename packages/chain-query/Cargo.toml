@@ -13,6 +13,7 @@ cosmwasm-std = { version = "1.0.0-beta6", features = ["iterator", "staking", "st
 prost = "0.9"
 prost-types = "0.9"
 cosmos-sdk-proto = { version = "0.9", default-features = false, path = "../cosmos-sdk-proto" }
+cosmos-types = { version = "0.9", default-features = false, path = "../cosmos-types" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 
 # Optional dependencies

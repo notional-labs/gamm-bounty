@@ -13,9 +13,7 @@ use std::str;
 
 use crate::{proto};
 use crate::msg::{
-    AcknowledgementMsg, 
     InstantiateMsg, ExecuteMsg, 
-    SpotPriceQueryResponse, 
 };
 use cosmos_types::gamm::{
     MsgSwapExactAmountIn, QueryPoolRequest, QueryPoolResponse, Pool,

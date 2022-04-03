@@ -3,109 +3,104 @@ use core::convert::TryFrom;
 use crate::msg::Msg;
 use cosmwasm_std::{StdResult, StdError};
 use crate::{prost_ext::MessageExt};
-use prost_types::Any;
+use prost_types::{Any, Duration};
 use crate::Coin;
+use std::convert::TryInto;
+// use core::time::Duration;
 
 // use prost_types::Any;
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub struct RewardsEstRequest {
+pub struct LockedDenomRequest {
     /// Sender's address.
-    pub owner: String,
-    pub lock_ids: Vec<u64>,
-    pub end_epoch: i64,
+    pub denom: String,
+    pub duration: core::time::Duration,
 }
 
-impl Msg for RewardsEstRequest {
-    type Proto = proto::osmosis::incentives::RewardsEstRequest;
+impl Msg for LockedDenomRequest {
+    type Proto = proto::osmosis::lockup::LockedDenomRequest;
 }
 
-impl TryFrom<proto::osmosis::incentives::RewardsEstRequest> for RewardsEstRequest {
+impl TryFrom<proto::osmosis::lockup::LockedDenomRequest> for LockedDenomRequest {
     type Error = StdError;
 
-    fn try_from(proto: proto::osmosis::incentives::RewardsEstRequest) -> StdResult<RewardsEstRequest> {
-        RewardsEstRequest::try_from(&proto)
+    fn try_from(proto: proto::osmosis::lockup::LockedDenomRequest) -> StdResult<LockedDenomRequest> {
+        LockedDenomRequest::try_from(&proto)
     }
 }
 
-impl TryFrom<&proto::osmosis::incentives::RewardsEstRequest> for RewardsEstRequest {
+impl TryFrom<&proto::osmosis::lockup::LockedDenomRequest> for LockedDenomRequest {
     type Error = StdError;
 
-    fn try_from(proto: &proto::osmosis::incentives::RewardsEstRequest) -> StdResult<RewardsEstRequest> {
-        Ok(RewardsEstRequest {
-            owner: proto.owner.parse().unwrap(),
-            lock_ids: proto.lock_ids.clone(),
-            end_epoch: proto.end_epoch,
+    fn try_from(proto: &proto::osmosis::lockup::LockedDenomRequest) -> StdResult<LockedDenomRequest> {
+        Ok(LockedDenomRequest {
+            denom: proto.denom.parse().unwrap(),
+            duration: proto.duration.clone().unwrap().try_into().unwrap(),
         })
     }
 }
 
-impl From<RewardsEstRequest> for proto::osmosis::incentives::RewardsEstRequest {
-    fn from(msg: RewardsEstRequest) -> proto::osmosis::incentives::RewardsEstRequest {
-        proto::osmosis::incentives::RewardsEstRequest::from(&msg)
+impl From<LockedDenomRequest> for proto::osmosis::lockup::LockedDenomRequest {
+    fn from(msg: LockedDenomRequest) -> proto::osmosis::lockup::LockedDenomRequest {
+        proto::osmosis::lockup::LockedDenomRequest::from(&msg)
     }
 }
 
-impl From<&RewardsEstRequest> for proto::osmosis::incentives::RewardsEstRequest {
-    fn from(msg: &RewardsEstRequest) -> proto::osmosis::incentives::RewardsEstRequest {
-        proto::osmosis::incentives::RewardsEstRequest {
-            owner: msg.owner.to_string(),
-            lock_ids: msg.lock_ids.clone(),
-            end_epoch: msg.end_epoch,
+impl From<&LockedDenomRequest> for proto::osmosis::lockup::LockedDenomRequest {
+    fn from(msg: &LockedDenomRequest) -> proto::osmosis::lockup::LockedDenomRequest {
+        proto::osmosis::lockup::LockedDenomRequest {
+            denom: msg.denom.to_string(),
+            duration: (prost_types::Duration::from(msg.duration)).into(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub struct RewardsEstResponse {
-    pub coins: Vec<Coin>,
+pub struct LockedDenomResponse {
+    pub amount: String,
 }
 
 
-impl Msg for RewardsEstResponse {
-    type Proto = proto::osmosis::incentives::RewardsEstResponse;
+impl Msg for LockedDenomResponse {
+    type Proto = proto::osmosis::lockup::LockedDenomResponse;
 }
 
-impl TryFrom<proto::osmosis::incentives::RewardsEstResponse> for RewardsEstResponse {
+impl TryFrom<proto::osmosis::lockup::LockedDenomResponse> for LockedDenomResponse {
     type Error = StdError;
 
-    fn try_from(proto: proto::osmosis::incentives::RewardsEstResponse) -> StdResult<RewardsEstResponse> {
-        RewardsEstResponse::try_from(&proto)
+    fn try_from(proto: proto::osmosis::lockup::LockedDenomResponse) -> StdResult<LockedDenomResponse> {
+        LockedDenomResponse::try_from(&proto)
     }
 }
 
-impl TryFrom<&proto::osmosis::incentives::RewardsEstResponse> for RewardsEstResponse {
+impl TryFrom<&proto::osmosis::lockup::LockedDenomResponse> for LockedDenomResponse {
     type Error = StdError;
 
-    fn try_from(proto: &proto::osmosis::incentives::RewardsEstResponse) -> StdResult<RewardsEstResponse> {
-        Ok(RewardsEstResponse {
-            coins: proto
-                .coins
-                .iter()
-                .map(TryFrom::try_from)
-                .collect::<Result<_, _>>()?,
+    fn try_from(proto: &proto::osmosis::lockup::LockedDenomResponse) -> StdResult<LockedDenomResponse> {
+        Ok(LockedDenomResponse {
+            amount: proto.amount.parse().unwrap(),
         })
     }
 }
 
-impl From<RewardsEstResponse> for proto::osmosis::incentives::RewardsEstResponse {
-    fn from(msg: RewardsEstResponse) -> proto::osmosis::incentives::RewardsEstResponse {
-        proto::osmosis::incentives::RewardsEstResponse::from(&msg)
+impl From<LockedDenomResponse> for proto::osmosis::lockup::LockedDenomResponse {
+    fn from(msg: LockedDenomResponse) -> proto::osmosis::lockup::LockedDenomResponse {
+        proto::osmosis::lockup::LockedDenomResponse::from(&msg)
     }
 }
 
-impl From<&RewardsEstResponse> for proto::osmosis::incentives::RewardsEstResponse {
-    fn from(msg: &RewardsEstResponse) -> proto::osmosis::incentives::RewardsEstResponse {
-        proto::osmosis::incentives::RewardsEstResponse {
-            coins: msg.coins.iter().map(Into::into).collect(),
+impl From<&LockedDenomResponse> for proto::osmosis::lockup::LockedDenomResponse {
+    fn from(msg: &LockedDenomResponse) -> proto::osmosis::lockup::LockedDenomResponse {
+        proto::osmosis::lockup::LockedDenomResponse {
+            amount: msg.amount.to_string(),
         }
     }
 }
 
-impl RewardsEstResponse {
+impl LockedDenomResponse {
 
-    pub fn into_proto(self) -> proto::osmosis::incentives::RewardsEstResponse {
+    pub fn into_proto(self) -> proto::osmosis::lockup::LockedDenomResponse {
         self.into()
     }
 

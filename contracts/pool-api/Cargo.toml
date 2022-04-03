@@ -42,6 +42,8 @@ prost = "0.9"
 prost-types = "0.9"
 cosmos-sdk-proto = { version = "0.9", default-features = false, path = "../../packages/cosmos-sdk-proto" }
 cosmos-types = { version = "0.9", path = "../../packages/cosmos-types" }
+chain-query = { version = "0.9", path = "../../packages/chain-query" }
+
 
 [dev-dependencies]
 cosmwasm-vm = { version = "1.0.0-beta6" , default-features = false, features = ["iterator", "stargate"] }
