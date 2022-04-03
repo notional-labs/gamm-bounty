@@ -81,22 +81,18 @@ pub fn update_epoch_pool(deps: DepsMut, pool: Pool, epoch_id: u64, pool_id: u64,
     };
     
     let unique_token_makers = pool.unique_token_makers;
-
     let marker_1day_denom = unique_token_makers.0;
     let gamm_1day_bonded_per_reward = GAMM_BONDED_EACH_POOL / contract_balances_map[&marker_1day_denom] as f64;
 
     let total_gamm_1day_bonded =  gamm_1day_bonded_per_reward * TOTAL_REWARD_EACH_EPOCH;
-
     let marker_7day_denom = unique_token_makers.1;
     let gamm_7day_bonded_per_reward = GAMM_BONDED_EACH_POOL / contract_balances_map[&marker_7day_denom] as f64;
 
     let total_gamm_7day_bonded =  gamm_7day_bonded_per_reward * TOTAL_REWARD_EACH_EPOCH;
-
     let marker_14day_denom = unique_token_makers.2;
     let gamm_14day_bonded_per_reward = GAMM_BONDED_EACH_POOL / contract_balances_map[&marker_14day_denom] as f64;
 
     let total_gamm_14day_bonded =  gamm_14day_bonded_per_reward * TOTAL_REWARD_EACH_EPOCH;
-
     total_lock_up.lock_1_day = total_gamm_1day_bonded as u128;
     total_lock_up.lock_7_day = total_gamm_7day_bonded as u128;
     total_lock_up.lock_14_day = total_gamm_14day_bonded as u128;
@@ -104,8 +100,10 @@ pub fn update_epoch_pool(deps: DepsMut, pool: Pool, epoch_id: u64, pool_id: u64,
     POOLS_STATE_AT_EACH_EPOCH.save(deps.storage, get_pool_at_epoch_key(pool_id, epoch_id), &total_lock_up).unwrap();
 }
 
+
+
 pub fn execute_pool_api_service(deps: DepsMut, pool_id: u64) {
-    
+
 
 
 

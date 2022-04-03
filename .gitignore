@@ -6,7 +6,7 @@
 
 # Build results
 target/
-
+target/rls
 # IDEs
 .vscode/
 .idea/
@@ -20,6 +20,10 @@ target/
 hash.txt
 contracts.txt
 artifacts/
+
+contracts/ibc-gamm-osmosis/target/
+contracts/pool-api/target/
+contracts/pool-manager/target
 
 # code coverage
 tarpaulin-report.*
