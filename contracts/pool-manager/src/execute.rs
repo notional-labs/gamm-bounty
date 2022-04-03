@@ -35,7 +35,7 @@ use cosmos_types::msg::{Msg,MsgProto};
 use cosmos_types::gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
 use crate::state::{LASTEST_UPDATED_EPOCH, CONFIG, CONTRACT_BALANCES};
 use cosmos_types::{SwapAmountInRoute, Coin};
-use crate::chain_query::{query_current_epoch_id}; 
+use chain_query::{query_estimate_reward, query_current_epoch_id}; 
 
 
 use cosmos_types::{

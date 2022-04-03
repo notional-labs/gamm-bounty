@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 
 use crate::state::{
-    TotalLockUp
+    
 };
 
 use crate::msg::{
@@ -11,10 +11,10 @@ use crate::msg::{
 };
 
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, CosmosMsg, DepsMut, from_binary,
+    entry_point, to_binary, Binary, CosmosMsg, from_binary,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, MessageInfo, Response, StdError, StdResult,
+    IbcReceiveResponse,  StdError, 
     QueryRequest, BankMsg
 };
 
@@ -31,22 +31,24 @@ use cosmos_types::epochs::{
 };
 use cosmos_types::msg::{Msg,MsgProto};
 use cosmos_types::gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse};
-use crate::state::{LASTEST_UPDATED_EPOCH, POOLS, PoolInfo, GAMM_BONDED_EACH_POOL, TOTAL_REWARD_EACH_EPOCH, TotalGammBonded, POOLS_STATE_AT_EACH_EPOCH, get_pool_at_epoch_key};
+use crate::state::{LASTEST_UPDATED_EPOCH, POOLS, PoolInfo, OUR_GAMM_BONDED_EACH_POOL, TOTAL_REWARD_EACH_EPOCH, TotalGammBonded, LOCK_IDS, get_pool_at_epoch_key, get_lock_key, DistrInfos, DistrInfo};
 use cosmos_types::{SwapAmountInRoute, Coin};
-use crate::chain_query::{query_current_epoch_id}; 
 use cosmwasm_std::{Order};
 use std::collections::{HashMap};
+use chain_query::{query_current_epoch_id, query_estimate_reward, query_total_lock_up};
+
 
 use cosmos_types::{
     QueryCurrentEpochRequest
 };
 
+pub const DURATION_IN_DAY: [u8;3] = [1,7,14];
 
 pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> StdResult<u64> {
 
     let current_epoch_id = query_current_epoch_id(deps)?;
 
-    if current_epoch_id == LASTEST_UPDATED_EPOCH.load(deps.storage)? {
+    if current_epoch_id as u16 == LASTEST_UPDATED_EPOCH.load(deps.storage)? {
         return Err(StdError::generic_err("already updated"))
     } 
 
@@ -58,18 +60,68 @@ pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> Std
         balances_map[&balance.denom] = balance.amount.into();
     }
 
-    let pools : Vec<(u64, PoolInfo)> = POOLS
+    let pools : Vec<(u16, PoolInfo)> = POOLS
         .range_de(deps.storage, None, None, Order::Ascending)
         .map(|item| item.map(Into::into))
         .collect::<StdResult<_>>()?;
 
-    for pool_item in pools {
-        let pool_id = pool_item.0;
-        let pool = pool_item.1;
-        update_epoch_pool(deps, pool, current_epoch_id, pool_id, balances_map)
+    for duration in DURATION_IN_DAY {
+        for pool_item in pools {
+            let pool_id = pool_item.0;
+            let pool = pool_item.1;
+            update_epoch_pool(deps, pool, current_epoch_id, pool_id, balances_map)
+        }
+    }
+    
+    Ok(current_epoch_id)
+}
+
+
+pub fn cal_total_reward_this_epoch(deps: DepsMut, pool_info: &PoolInfo, this_contract_address: String, current_epoch_id: u16, pool_id: u16, duration_in_day: u8) {
+    let lock_id = LOCK_IDS.load(deps.storage, get_lock_key(pool_id, duration_in_day))?;
+
+    let our_est_reward = query_estimate_reward(deps, this_contract_address, vec![lock_id], current_epoch_id as i64)?;
+
+    let duration: core::time::Duration;
+    if duration_in_day == 1 {
+        duration = core::time::Duration::new(86400,0);
+    }
+    else if duration_in_day == 7 {
+        duration = core::time::Duration::new(604800, 0);
+    } else {
+        duration = core::time::Duration::new(1209600, 0);
     }
 
-    Ok(current_epoch_id)
+    let total_lock_up = query_total_lock_up(deps, pool_info.gamm_denom, duration)?;
+
+    let distr_infos: Vec<DistrInfo> = vec![];
+
+    for coin in our_est_reward{
+        if coin.denom == pool_info.pool_asset_denoms.0 && coin.denom == pool_info.pool_asset_denoms.1{
+
+            // total_reward = total_lock_up / OUR_GAMM_BONDED_EACH_POOL * our_est_reward amount
+            
+            let total_lock_up_dec_str = "0." + (total_lock_up % OUR_GAMM_BONDED_EACH_POOL).to_string();
+            let total_reward =  * coin.amount as f64;
+
+            let distr_info = DistrInfo {
+                denom: coin.denom.to_string(),
+                total_reward: 
+
+
+            }
+            
+            distr_infos.append()
+
+        }
+
+
+    }
+
+
+    
+
+
 }
 
 

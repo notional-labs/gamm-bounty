@@ -2,7 +2,6 @@ pub mod contract;
 pub mod msg;
 pub mod state;
 pub mod execute;
-pub mod chain_query;
 
 // pub use crate::{
 //     base::{ Coin, SwapAmountInRoute},

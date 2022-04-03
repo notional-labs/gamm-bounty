@@ -47,6 +47,3 @@ pub fn query_current_epoch_id(deps: DepsMut) -> StdResult<u64> {
 
     Ok(res.current_epoch)
 }
-
-pub use prost_types::Any;
-pub use cosmos_sdk_proto as proto;
