@@ -43,6 +43,9 @@ prost-types = "0.9"
 cosmos-sdk-proto = { version = "0.9", default-features = false, path = "../../packages/cosmos-sdk-proto" }
 cosmos-types = { version = "0.9", path = "../../packages/cosmos-types" }
 chain-query = { version = "0.9", path = "../../packages/chain-query" }
+bigdecimal = "0.3.0"
+num-bigint = "0.4.3"
+num-traits = "0.2.14"
 
 
 [dev-dependencies]

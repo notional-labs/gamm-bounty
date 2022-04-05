@@ -3,6 +3,8 @@ use cosmwasm_std::{Uint128, Storage, StdResult, StdError};
 use cosmos_types::{Coin, DecCoin};
 use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
+use bigdecimal::BigDecimal;
+use num_bigint::{BigInt, ParseBigIntError, Sign, ToBigInt};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct PoolInfo {
@@ -11,12 +13,13 @@ pub struct PoolInfo {
     pub unique_token_makers: (String, String, String),
 }
 
-pub const OUR_GAMM_BONDED_EACH_POOL: u128 = 1000000000000000u128;
-pub const TOTAL_REWARD_EACH_EPOCH: u128 =   1000000000000u128;
+pub const OUR_GAMM_BONDED_EACH_POOL: BigDecimal = (1000000000000000 as u64).into();
+pub const TOTAL_REWARD_EACH_EPOCH: BigDecimal =   (1000000000000 as u64).into();
 
 pub const POOLS: Map<u16, PoolInfo> = Map::new("pools");
 
 pub const LASTEST_UPDATED_EPOCH: Item<u16> = Item::new("last_epoch_updated");
+pub const LATEST_CONTRACT_BALANCES: Map<String, u64> = Map::new("lastest_market_balance");
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct TotalGammBonded {
@@ -28,7 +31,7 @@ pub struct TotalGammBonded {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct DistrInfo {
     pub denom: String,
-    pub total_reward: u128,
+    pub total_reward: u64,
     pub reward_per_gamm_lockuped: f64,
 }
 
