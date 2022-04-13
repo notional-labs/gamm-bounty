@@ -82,27 +82,26 @@ pub fn execute_update_epoch(deps: DepsMut, this_contract_address: String) -> Std
     Ok(current_epoch_id)
 }
 
-pub fn get_marker_earned_last_epoch(deps: DepsMut, pool_info: &PoolInfo, duration: u8, current_balances: &HashMap<String, u128>) -> StdResult<u64>{
-    let marker_denom : &str;
+pub fn get_marker_earned_last_epoch(deps: DepsMut, pool_info: &PoolInfo, duration: u8, current_balances: &HashMap<String, u64>) -> StdResult<u64>{
+    let marker_denom : String;
     if duration == 1 {
-        marker_denom = &pool_info.unique_token_markers.0;
+        marker_denom = pool_info.unique_token_markers.0;
     }
     else if duration == 7 {
-        marker_denom = &pool_info.unique_token_markers.1;
+        marker_denom = pool_info.unique_token_markers.1;
     }
     else {
-        marker_denom = &pool_info.unique_token_markers.2;
+        marker_denom = pool_info.unique_token_markers.2;
     }
 
-    let current_balance = current_balances[marker_denom];
+    let current_balance = current_balances[&marker_denom];
 
-    current_balance - LATEST_CONTRACT_BALANCES.load(deps.storage, marker_denom)?
-
-
+    Ok(current_balance - LATEST_CONTRACT_BALANCES.load(deps.storage, marker_denom)?)
 }
 
-pub fn cal_reward_per_gamm_lockuped_last_epoch(deps: DepsMut, pool_, this_contract_address: String, ) -> StdResult<()> {
-    let total_lock_up = 
+pub fn cal_reward_per_gamm_lockuped_last_epoch(deps: DepsMut, pool_info: &PoolInfo, this_contract_address: String, duration: u8, current_balances: &HashMap<String, u64>) -> StdResult<()> {
+    let marker_earned_last_epoch = get_marker_earned_last_epoch(deps, pool_info, duration, current_balances)?;
+    let 
 
 }
 
@@ -119,18 +118,18 @@ pub fn cal_total_reward_this_epoch(deps: DepsMut, pool_info: &PoolInfo, this_con
     } else {
         duration = core::time::Duration::new(1209600, 0);
     }
-    let total_lock_up: BigDecimal = BigDecimal::from_str(&query_total_lock_up(deps, pool_info.gamm_denom, duration)?).unwrap();
+    let total_lock_up = query_total_lock_up(deps, pool_info.gamm_denom, duration) ?;
     let distr_infos: Vec<DistrInfo> = vec![];
     for coin in our_est_reward{
         if coin.denom == pool_info.pool_asset_denoms.0 && coin.denom == pool_info.pool_asset_denoms.1{
 
             // total_reward = total_lock_up / OUR_GAMM_BONDED_EACH_POOL * our_est_reward amount
-            let our_est_reward_amount: BigDecimal = BigDecimal::new(BigInt::from_u128(coin.amount).unwrap(), 0);
-            let total_reward = (total_lock_up / OUR_GAMM_BONDED_EACH_POOL) * our_est_reward_amount;   
+            let our_est_reward_amount = coin.amount;
+            let total_reward = total_lock_up * our_est_reward_amount / OUR_GAMM_BONDED_EACH_POOL;   
             let distr_info = DistrInfo {
                 denom: coin.denom.to_string(),
-                total_reward: our_est_reward_amount.to_u64().unwrap(),
-                reward_per_gamm_lockuped: 0f64,
+                total_reward: total_reward,
+                total_gamm_lockuped: 0u128,
             };
             distr_infos.append(vec![distr_info]);
         }

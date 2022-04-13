@@ -25,7 +25,7 @@ use cosmos_types::{
     QueryCurrentEpochRequest
 };
 
-pub fn query_current_epoch_id(deps: DepsMut) -> StdResult<u64> {
+pub fn query_current_epoch_id(deps: DepsMut) -> StdResult<u16> {
     let req = QueryCurrentEpochRequest{
         identifier: "day".to_owned(),
     }.to_any().unwrap();
@@ -45,5 +45,5 @@ pub fn query_current_epoch_id(deps: DepsMut) -> StdResult<u64> {
     res_proto = prost::Message::decode(&*res_x).unwrap();
     let res: QueryCurrentEpochResponse = TryFrom::try_from(res_proto).unwrap();
 
-    Ok(res.current_epoch)
+    Ok(res.current_epoch as u16)
 }

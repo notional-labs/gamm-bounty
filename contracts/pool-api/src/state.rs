@@ -10,11 +10,11 @@ use num_bigint::{BigInt, ParseBigIntError, Sign, ToBigInt};
 pub struct PoolInfo {
     pub gamm_denom: String,
     pub pool_asset_denoms: (String,String),
-    pub unique_token_makers: (String, String, String),
+    pub unique_token_markers: (String, String, String),
 }
 
-pub const OUR_GAMM_BONDED_EACH_POOL: BigDecimal = (1000000000000000 as u64).into();
-pub const TOTAL_REWARD_EACH_EPOCH: BigDecimal =   (1000000000000 as u64).into();
+pub const OUR_GAMM_BONDED_EACH_POOL: u128 = 1000000000000000u128;
+pub const TOTAL_REWARD_EACH_EPOCH: u128 =   1000000000000u128;
 
 pub const POOLS: Map<u16, PoolInfo> = Map::new("pools");
 
@@ -31,8 +31,8 @@ pub struct TotalGammBonded {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct DistrInfo {
     pub denom: String,
-    pub total_reward: u64,
-    pub reward_per_gamm_lockuped: f64,
+    pub total_reward: u128,
+    pub reward_per_1tril_gamm: u128,
 }
 
 // #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]

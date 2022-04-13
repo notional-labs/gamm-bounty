@@ -25,7 +25,7 @@ pub struct Coin {
     pub denom: String,
 
     /// Amount
-    pub amount: u64,
+    pub amount: u128,
 }
 
 impl fmt::Display for Coin{

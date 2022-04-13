@@ -44,7 +44,7 @@ pub struct IbcSwapPacket {
 
     pub pool_id: u64,
     
-    pub in_amount: u64,
+    pub in_amount: u128,
     pub in_denom: String, 
 
     pub out_denom: String,

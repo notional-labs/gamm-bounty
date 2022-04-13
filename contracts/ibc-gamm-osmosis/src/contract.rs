@@ -27,6 +27,8 @@ use cosmos_types::gamm::{QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwa
 use crate::execute::execute_fund;
 use crate::state::{REMOTE_CONTRACT_BALANCES, CHANNEL_ID_TO_CONN_ID, get_contract_identifier};
 use cosmos_types::{SwapAmountInRoute, Coin};
+use num_bigint::{BigInt, ParseBigIntError, Sign, ToBigInt};
+use num_traits::{FromPrimitive, ToPrimitive};
 
 pub const IBC_VERSION: &str = "ibc-gamm-1";
 pub const RECEIVE_SWAP_ID: u64 = 1234;
@@ -387,6 +389,7 @@ mod tests {
 
         // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
+
     fn connect(mut deps: DepsMut, channel_id: &str) {
         let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
         // first we try to open with a valid handshake
@@ -396,6 +399,8 @@ mod tests {
         let handshake_connect =
             mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+
+
     }
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -406,6 +411,14 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
+    }
+
+    #[test]
+    fn test_big() {
+        let a: primitive_types::U256 = 11.into();
+        
+
+
     }
 }
 
